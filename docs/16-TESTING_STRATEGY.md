@@ -73,10 +73,19 @@ failure path that returns a default in production.
 
 The most important test in the repository.
 
-A synthetic asymmetric phantom volume, committed, with an unmistakable lopsided marker, pushed
-through **every stage that touches geometry**. After each stage, a hard assertion verifies the
-marker is on the expected side at the expected voxel and world coordinates.
+A synthetic asymmetric phantom with unmistakable lopsided markers, pushed through **every stage
+that touches geometry**. After each stage, a hard assertion verifies each marker is on the
+anatomical side it claims, at the expected world coordinates in millimetres.
 
+The phantom is a deterministic generator, not a committed volume. Reasons in
+[`06-IMAGING_PIPELINE.md`](06-IMAGING_PIPELINE.md#orientation).
+
+- **Asserted in world space, never in voxel space.** A correct reorientation and a catastrophic
+  flip produce byte-identical arrays; only the affine separates them, so a voxel-index check
+  fails the safe operation and passes the fatal one.
+- Three markers on three anatomical poles. One marker leaves two axes unguarded.
+- A deliberately broken fixture per axis, so a test asserts the assertion **fails**. An
+  assertion nobody has watched fail is not known to work.
 - Runs in CI on every commit, not on a schedule and not by hand.
 - Runs again at application startup in a debug build, writing the result to the log.
 - Its output appears in every per-case QC report as a rendered image with laterality burned in.

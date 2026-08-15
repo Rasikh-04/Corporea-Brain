@@ -94,18 +94,24 @@ disk went from 33 GB to 36 GB.
 | ADR-005 | Cognitive instrument, MMSE is licence-blocked | Clinical record F5 | Governance | end of Phase 1 |
 | ADR-007 | Record store technology | Data model implementation | Backend | before R2 |
 
-## One deviation from the documents, recorded here rather than buried
+## Settled: the phantom is generated, not committed
 
-[`docs/06`](docs/06-IMAGING_PIPELINE.md) says the phantom is "committed to the repository."
-It is not. It is a deterministic generator, written out on demand by
-[`scripts/make_phantom.py`](scripts/make_phantom.py) into git-ignored `build/`. The reasoning
-is in the `phantom.py` module docstring; the short version is that `.gitignore` blocks every
-imaging extension under every path on purpose, and punching an exception through `*.nii.gz`
-for a fixture is precisely the gap its own header warns about. A generator is also auditable
-where a binary is not, and cannot go stale.
+Raised as a deviation and closed on 2026-08-16. The phantom is a deterministic generator,
+written out on demand by [`scripts/make_phantom.py`](scripts/make_phantom.py) into git-ignored
+`build/`, and [`docs/06`](docs/06-IMAGING_PIPELINE.md#orientation) and
+[`docs/16`](docs/16-TESTING_STRATEGY.md#orientation) have been amended to match rather than
+left disagreeing with the code.
 
-**If this is wrong, say so and it changes.** Otherwise amend docs/06 to match. Leaving the
-document and the code disagreeing is the worse of the three options.
+The reasoning is in docs/06 in full: `.gitignore` blocks every imaging extension on purpose and
+an exception for a fixture is the gap its own header warns about; a generator is auditable
+where a binary is not; a committed fixture can drift with nothing to say so; and with no random
+seed anywhere, reproducibility is preserved rather than traded away.
+
+The same amendment fixed a second and more consequential disagreement. Both documents said the
+assertion checks "the expected voxel and world coordinates." It checks **world coordinates
+only**, and the voxel half was actively wrong: a correct reorientation and a catastrophic flip
+produce byte-identical arrays, so a voxel-index check fails the safe operation and passes the
+fatal one. Written as it was, the document would have led someone to build the wrong test.
 
 ## Immediate next actions
 

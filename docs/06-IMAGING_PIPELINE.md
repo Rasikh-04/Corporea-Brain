@@ -210,20 +210,63 @@ look fine.
 
 **The control:**
 
-1. A synthetic **asymmetric phantom volume** is committed to the repository. It has an
-   unmistakable, deliberately lopsided marker.
-2. The phantom is pushed through **every** stage that touches geometry, and a hard assertion
-   verifies the marker is still on the expected side, with the expected voxel and world
-   coordinates.
-3. This runs as a **CI test**, on every commit, not as a manual check.
-4. It runs again at application startup in a debug build, and the result is written to the log.
-5. Every per-case QC report includes an orientation panel: the orientation code before and
+1. A synthetic **asymmetric phantom volume** with unmistakable, deliberately lopsided markers.
+   It is a **deterministic generator**, [`pipeline/braintwin_pipeline/phantom.py`](../pipeline/braintwin_pipeline/phantom.py),
+   and not a committed binary. See below for why.
+2. The phantom carries **a marker on each of three anatomical poles**, left, anterior and
+   superior. One marker leaves two axes unguarded, and a superior/inferior flip invalidates a
+   result exactly as completely as a left/right one while attracting far less suspicion. Its
+   grid is deliberately awkward for the same reason: no two array dimensions are equal and no
+   two voxel spacings are equal, because an axis transpose is invisible in a cubic isotropic
+   volume and invisible again in an isotropic direction matrix.
+3. The phantom is pushed through **every** stage that touches geometry, and a hard assertion
+   verifies each marker is still on the anatomical side it claims, at the expected **world**
+   coordinates in millimetres.
+4. **The assertion is made in world space, never in voxel space.** This is the part that is
+   easy to get backwards, so it is stated as a rule. Flipping an array *and* flipping its
+   affine to match is not a bug: it is the same physical object written down in a different
+   order, and every correct reorientation does precisely that. The bug is when the array and
+   the affine stop agreeing. A voxel-index assertion cannot separate the two. It fails on the
+   correct operation and passes on the resample that silently dropped the affine update, which
+   is the wrong way round on both counts. The two really are indistinguishable in the data: a
+   correct reorientation to LAS and a broken flip along the first axis produce **byte-identical
+   arrays**, and only the affine tells them apart.
+5. A **deliberately broken fixture per axis** exists, data flipped with the affine left alone,
+   so that a test can assert the assertion *fails*. An assertion nobody has watched fail is not
+   known to work, and this one guards a failure mode with no symptom of its own.
+6. This runs as a **CI test**, on every commit, not as a manual check.
+7. It runs again at application startup in a debug build, and the result is written to the log.
+8. Every per-case QC report includes an orientation panel: the orientation code before and
    after, the affine determinant sign, and a rendered image with a laterality label burned in.
+   The determinant sign is evidence for the panel, **not a check in its own right**: it moves
+   on a correct reorientation and sits still through the fatal one, which is the opposite of
+   the intuition that suggests it as a cheap substitute for the markers.
+
+**Why the phantom is generated rather than committed.** This document originally said the
+phantom volume was committed to the repository. It is not, and the reasons are worth stating
+because the alternative looks more rigorous than it is.
+
+- [`.gitignore`](../.gitignore) blocks every imaging extension under every path on purpose,
+  and its own header says a pattern that occasionally ignores something harmless is correct
+  while a gap that lets one DICOM through is not. An exception carved through `*.nii.gz` for a
+  fixture is that gap, and rule 8 is not worth weakening for a file that rebuilds in a
+  millisecond.
+- A generator is auditable. A reader can see what makes it lopsided. A committed binary asks a
+  reviewer to take its asymmetry on trust.
+- A committed fixture can drift from the code that reads it with nothing to say so. A generator
+  has one definition and nothing to drift from.
+- Reproducibility is preserved, not traded away: there is no random number generator and no
+  seed. The phantom is pure geometry, bit-identical on every machine, which is what lets the
+  expected marker coordinates be hand-computed constants rather than tolerances.
+
+[`scripts/make_phantom.py`](../scripts/make_phantom.py) writes it out on demand, into
+git-ignored `build/`, for loading into a viewer.
 
 **Additionally, once, by hand, and written down:** take one real DICOM study, convert it, and
 verify that left is left in three independent tools. Record how you verified it. Then
-deliberately break the orientation and observe how invisible the failure is. Do this before
-writing pipeline code, not after.
+deliberately break the orientation and observe how invisible the failure is —
+`scripts/make_phantom.py --break-axis 0` produces the broken volume for exactly this. Do this
+before writing pipeline code, not after.
 
 <a id="caching"></a>
 
