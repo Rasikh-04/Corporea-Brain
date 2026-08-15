@@ -12,8 +12,8 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
-from braintwin_eval.aggregate import UndefinedPolicy, summarise
-from braintwin_eval.metrics import (
+from corporea_eval.aggregate import UndefinedPolicy, summarise
+from corporea_eval.metrics import (
     Degeneracy,
     MetricError,
     assd,

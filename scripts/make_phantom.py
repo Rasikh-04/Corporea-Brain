@@ -2,7 +2,7 @@
 """Write the orientation phantom to disk, for looking at it in a viewer.
 
 The phantom itself is a deterministic function in
-``pipeline/braintwin_pipeline/phantom.py``, not a committed file. See that module for why.
+``pipeline/corporea_pipeline/phantom.py``, not a committed file. See that module for why.
 Nothing in CI needs this script: the tests build the phantom in memory.
 
 What this is for is the exercise ``docs/06-IMAGING_PIPELINE.md`` asks for by hand, once, and
@@ -27,7 +27,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT / "pipeline"))
 
-from braintwin_pipeline.phantom import (  # noqa: E402
+from corporea_pipeline.phantom import (  # noqa: E402
     break_orientation,
     build_phantom,
     orientation_report,

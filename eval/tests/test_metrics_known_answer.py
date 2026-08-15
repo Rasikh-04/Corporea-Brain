@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
-from braintwin_eval.metrics import assd, dice, hd95, volume_error
+from corporea_eval.metrics import assd, dice, hd95, volume_error
 
 pytestmark = pytest.mark.known_answer
 

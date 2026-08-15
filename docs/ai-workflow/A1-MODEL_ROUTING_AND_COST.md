@@ -1,4 +1,4 @@
-# Cost and Model-Routing Policy — BrainTwin FYP (Qt/C++/VTK on 3D Slicer)
+# Cost and Model-Routing Policy — Corporea-Brain FYP (Qt/C++/VTK on 3D Slicer)
 
 Scope: 3-5 undergrad engineers, part-time, ~8 months, Fedora + Windows, Claude Code + Cowork.
 Grounded only in the ECC skills/commands listed below. No tooling is invented.
@@ -172,7 +172,7 @@ Hard rules from the skill: "Do not estimate costs from raw token counts when `co
 | Metric | Query source | Trigger |
 |---|---|---|
 | `today_cost` vs `yesterday_cost` | summary query | >2x jump = someone pasted a build log |
-| Cost by `project` | project breakdown | any non-BrainTwin project outranking it = misrouted work |
+| Cost by `project` | project breakdown | any non-Corporea-Brain project outranking it = misrouted work |
 | Cost by `tool_name` | tool breakdown | `Read`/`Bash` dominating = insufficient local filtering (Section 2) |
 | Average cost per session | `SUM(cost_usd)/COUNT(DISTINCT session_id)` | rising trend = context not being compacted |
 | 7-day cost slope | last-seven-days query | flat-to-down is the target; up two weeks running = review the routing table |

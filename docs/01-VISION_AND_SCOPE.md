@@ -6,7 +6,7 @@
 
 Memorise this. Every team member should be able to say it identically.
 
-> BrainTwin Desktop is a desktop application for neurologists and neurosurgical teams in
+> Corporea-Brain is a desktop application for neurologists and neurosurgical teams in
 > resource-constrained settings. It ingests a patient's brain imaging study from local media,
 > computes quantitative and anatomically localised characterisation of ischemic stroke and
 > glioma lesions, maintains a structured longitudinal neurological record including clinical

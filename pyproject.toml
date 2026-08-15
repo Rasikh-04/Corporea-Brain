@@ -23,7 +23,7 @@ quote-style = "double"
 # docs/14-CODING_STANDARDS.md#python: "Type hints on every public function. Checked, not
 # decorative." Scoped to our packages, not third-party stubs we do not own.
 python_version = "3.12"
-files = ["pipeline/braintwin_pipeline", "eval/braintwin_eval", "app/braintwin_core", "scripts"]
+files = ["pipeline/corporea_pipeline", "eval/corporea_eval", "app/corporea_core", "scripts"]
 disallow_untyped_defs = true
 disallow_incomplete_defs = true
 check_untyped_defs = true

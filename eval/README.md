@@ -19,7 +19,7 @@ directory.
 
 | Path | Holds |
 |---|---|
-| `braintwin_eval/metrics.py` | Dice, HD95, ASSD, volume error. Surface distances in millimetres. |
+| `corporea_eval/metrics.py` | Dice, HD95, ASSD, volume error. Surface distances in millimetres. |
 | `tests/test_metrics_known_answer.py` | Hand-computed answers, worked out in the docstrings. |
 | `tests/test_metrics_degenerate.py` | Empty, single-voxel and disjoint inputs. No silent NaN. |
 | `tests/test_seam_no_application_import.py` | Asserts seam 4 mechanically. |
@@ -29,8 +29,8 @@ directory.
 > The evaluation harness never imports the application.
 
 It runs against CLI modules and file artifacts, so results reproduce without a GUI. The seam
-is asserted by a test that imports every `braintwin_eval` module and fails if `slicer`, `vtk`,
-`ctk`, `qt` or anything under `braintwin_core` appears in `sys.modules` afterwards.
+is asserted by a test that imports every `corporea_eval` module and fails if `slicer`, `vtk`,
+`ctk`, `qt` or anything under `corporea_core` appears in `sys.modules` afterwards.
 
 ## What a metric returns
 

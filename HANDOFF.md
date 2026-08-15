@@ -13,7 +13,7 @@ assertion, the evaluation harness and the organ manifest validator all exist and
 ## Where the project is
 
 The measuring instruments are built and the thing they measure is not, which is the ordering
-rule 7 demands. 176 tests pass in about two seconds against `pytest.ini`.
+rule 7 demands. 178 tests pass in about two seconds against `pytest.ini`.
 
 The two planning documents are settled at version 1 and mirrored under
 [`docs/research/`](docs/research/). The document set is complete and indexed at
@@ -24,33 +24,33 @@ What landed in phase 1, in the order it was built:
 1. **Directory skeleton.** `app/`, `organs/`, `pipeline/`, `eval/`, `bench/`, `ui/`,
    `hardware/`, `scripts/`, each with a `README.md` naming what it holds and which document
    specifies it.
-2. **The orientation assertion.** [`pipeline/braintwin_pipeline/orientation.py`](pipeline/braintwin_pipeline/orientation.py)
-   and [`phantom.py`](pipeline/braintwin_pipeline/phantom.py). The one idea it encodes: **the
+2. **The orientation assertion.** [`pipeline/corporea_pipeline/orientation.py`](pipeline/corporea_pipeline/orientation.py)
+   and [`phantom.py`](pipeline/corporea_pipeline/phantom.py). The one idea it encodes: **the
    assertion is made in world space, never in voxel space.** A test proves why, by showing
    that a correct reorientation to LAS and a broken flip along i produce *byte-identical
    arrays* and differ only in the affine. Any voxel-index check fails the safe operation and
    passes the fatal one. The phantom is checked against all 48 possible storage orders, and
    against a deliberately broken fixture per axis.
-3. **The evaluation harness.** [`eval/braintwin_eval/metrics.py`](eval/braintwin_eval/metrics.py):
+3. **The evaluation harness.** [`eval/corporea_eval/metrics.py`](eval/corporea_eval/metrics.py):
    Dice, HD95, ASSD, volume error, distances in millimetres. Every expected value in
    `test_metrics_known_answer.py` was computed by hand and the arithmetic is in the docstring.
    No metric returns a bare float; each carries a degeneracy flag, and
-   [`aggregate.py`](eval/braintwin_eval/aggregate.py) refuses to average over undefined values
+   [`aggregate.py`](eval/corporea_eval/aggregate.py) refuses to average over undefined values
    without being told which policy applies.
-4. **The organ manifest schema and validator.** [`app/braintwin_core/organ_manifest.py`](app/braintwin_core/organ_manifest.py),
+4. **The organ manifest schema and validator.** [`app/corporea_core/organ_manifest.py`](app/corporea_core/organ_manifest.py),
    run by [`scripts/validate_organs.py`](scripts/validate_organs.py). Collects every issue with
    a dotted field path rather than stopping at the first. Four of the seven checks in docs/04
    run; three are reported `DEFERRED` with the reason, never omitted.
 
 Three architectural seams are now asserted mechanically rather than by review: seam 4 (the
-harness never imports the application), the no-Slicer-imports rule for `braintwin_core`, and
+harness never imports the application), the no-Slicer-imports rule for `corporea_core`, and
 seam 5 (the brain manifest carries `<PARCELLATION>`, not an atlas name).
 
 `scripts/check-env.sh` steps 4, 5 and 6 now run the real tests instead of printing SKIP.
 
 **The environment is green.** `scripts/setup-env.sh` finished, and `scripts/check-env.sh`
 reports **0 fail, 3 warn** in `.venv`, with steps 4, 5 and 6 passing there.
-`pipeline/requirements.lock.txt` is committed: 103 packages, exact.
+`pipeline/requirements.lock.txt` is committed: 109 packages, exact.
 
 The three remaining warns are known and unchanged: 15 GiB RAM against a 16 GiB minimum, Fedora
 44's CMake 4.x, and a system Qt on `PATH`. All three matter only to the superbuild, and all

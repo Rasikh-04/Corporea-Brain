@@ -1,4 +1,4 @@
-# BrainTwin Desktop — pip constraints for the pipeline install.
+# Corporea-Brain — pip constraints for the pipeline install.
 #
 # A constraint is not a dependency. Nothing here is installed because it appears in this file;
 # these lines only bound what the resolver may choose when something else asks for the package.

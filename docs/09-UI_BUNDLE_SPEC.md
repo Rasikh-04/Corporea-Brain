@@ -58,7 +58,7 @@ ui/bundles/clinical-dark/
   "bundle_id": "clinical-dark",
   "display_name": "Clinical Dark",
   "schema_version": 1,
-  "author": "BrainTwin Desktop",
+  "author": "Corporea-Brain",
   "licence": "Apache-2.0",
   "targets": ["clinical", "demo"],
   "base_variant": "dark",

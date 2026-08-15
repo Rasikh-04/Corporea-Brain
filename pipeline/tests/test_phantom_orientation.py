@@ -15,14 +15,14 @@ import itertools
 
 import numpy as np
 import pytest
-from braintwin_pipeline.orientation import (
+from corporea_pipeline.orientation import (
     Axis,
     OrientationError,
     Pole,
     assert_no_flip,
     determinant_sign,
 )
-from braintwin_pipeline.phantom import (
+from corporea_pipeline.phantom import (
     PHANTOM_MARKERS,
     PHANTOM_SHAPE,
     PHANTOM_SPACING_MM,

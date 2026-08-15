@@ -9,18 +9,18 @@ Specified by [`docs/03-ARCHITECTURE.md`](../docs/03-ARCHITECTURE.md) and
 
 | Path | Holds | Status |
 |---|---|---|
-| `braintwin_core/` | Pure Python shared between Slicer modules and headless tooling | present |
+| `corporea_core/` | Pure Python shared between Slicer modules and headless tooling | present |
 | `<AppName>/` | SlicerCustomAppTemplate output: branding, home module, curated module set | not built, needs the superbuild |
 | `Modules/` | Our scripted and loadable modules, one directory each | not built, needs the superbuild |
 
-Everything except `braintwin_core/` is blocked on the Slicer superbuild, which is deferred.
+Everything except `corporea_core/` is blocked on the Slicer superbuild, which is deferred.
 See [`docs/15-BUILD_AND_ENVIRONMENT.md`](../docs/15-BUILD_AND_ENVIRONMENT.md).
 
-## braintwin_core
+## corporea_core
 
 The rule in [`docs/14-CODING_STANDARDS.md`](../docs/14-CODING_STANDARDS.md): a scripted
 module's logic lives in a plain class with no Slicer imports at module import time, and the
-widget is a thin shell over it. `braintwin_core` is where that logic goes when it is also
+widget is a thin shell over it. `corporea_core` is where that logic goes when it is also
 needed by something outside Slicer, such as a CI script.
 
 **It imports no `slicer`, `vtk`, `ctk`, `qt` or `PythonQt` at import time.** That constraint

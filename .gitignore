@@ -1,4 +1,4 @@
-# BrainTwin Desktop
+# Corporea-Brain
 #
 # Rule 8: never commit patient-derived data. Dataset use agreements forbid redistribution
 # and a public repo is a breach. Downloader scripts only, never the data.

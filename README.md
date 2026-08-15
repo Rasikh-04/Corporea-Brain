@@ -1,14 +1,18 @@
-# BrainTwin Desktop
+# Corporea-Brain
 
-An open, offline-capable neuro case workstation. It ingests a patient's brain imaging study
-from local media, produces quantified and anatomically localised lesion characterisation for
-ischemic stroke and glioma, attributes involvement to atlas regions and white-matter tracts
-with explicit uncertainty, presents literature-referenced clinical correlates as hypotheses
-rather than conclusions, and maintains all of it alongside a structured longitudinal
-neurological record — on a single laptop, with no PACS and no internet.
+The brain module of Corporea, an offline neuro case workstation for neurologists and
+neurosurgical teams. It ingests a patient's brain imaging study from local media, produces
+quantified and anatomically localised lesion characterisation for ischemic stroke and glioma,
+attributes involvement to atlas regions and white-matter tracts with explicit uncertainty,
+presents literature-referenced clinical correlates as hypotheses rather than conclusions, and
+maintains all of it alongside a structured longitudinal neurological record — on a single
+laptop, with no PACS and no internet.
 
 It is a decision-support and record-continuity tool. **It does not diagnose, does not plan
-surgery, and is not approved for clinical use.**
+surgery, does not simulate brain dynamics, and is not approved for clinical use.**
+
+> The Corporea integration repo, which will host the multi-organ body shell this module
+> plugs into, does not exist yet. It will be added as a placeholder once created.
 
 ## The contribution sentence
 

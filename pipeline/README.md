@@ -12,8 +12,8 @@ defined by [`docs/15-BUILD_AND_ENVIRONMENT.md`](../docs/15-BUILD_AND_ENVIRONMENT
 |---|---|
 | `requirements.txt` | Direct dependencies, exact pins. The file a human edits. |
 | `requirements.lock.txt` | Full transitive tree. The reproducibility artifact. Generated. |
-| `braintwin_pipeline/orientation.py` | Anatomical side from an affine, and the assertion. |
-| `braintwin_pipeline/phantom.py` | The synthetic asymmetric phantom, deterministic. |
+| `corporea_pipeline/orientation.py` | Anatomical side from an affine, and the assertion. |
+| `corporea_pipeline/phantom.py` | The synthetic asymmetric phantom, deterministic. |
 | `tests/` | Unit tests. Fast, headless, no Slicer import, no data files. |
 
 ## The environment
@@ -24,7 +24,7 @@ falls back to compiling ITK from source without saying so. Set up with
 [`scripts/check-env.sh`](../scripts/check-env.sh).
 
 Do not mix environments. Scripted modules run in Slicer's interpreter; the pipeline and the
-harness run here. Code shared across the boundary lives in `app/braintwin_core/`.
+harness run here. Code shared across the boundary lives in `app/corporea_core/`.
 
 ## Orientation comes first
 

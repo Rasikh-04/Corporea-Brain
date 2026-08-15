@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# BrainTwin Desktop — development environment setup.
+# Corporea-Brain — development environment setup.
 #
 # Covers everything in docs/15-BUILD_AND_ENVIRONMENT.md that does not require the Slicer
 # superbuild: system build dependencies, ccache, dcm2niix, and the pipeline Python
@@ -124,7 +124,7 @@ setup_python_env() {
 }
 
 main() {
-  say "BrainTwin Desktop environment setup"
+  say "Corporea-Brain environment setup"
   echo "  repo:   ${REPO_ROOT}"
   echo "  python: ${PYTHON_VERSION}"
 

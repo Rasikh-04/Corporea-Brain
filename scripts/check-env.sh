@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# BrainTwin Desktop — environment verification.
+# Corporea-Brain — environment verification.
 #
 # Implements the checkable subset of "Verifying the install" in
 # docs/15-BUILD_AND_ENVIRONMENT.md, plus the machine-requirement and known-trap checks

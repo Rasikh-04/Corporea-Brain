@@ -1,4 +1,4 @@
-# Context Budget & Session Hygiene Policy — BrainTwin FYP (Qt/C++/VTK on 3D Slicer)
+# Context Budget & Session Hygiene Policy — Corporea-Brain FYP (Qt/C++/VTK on 3D Slicer)
 
 Scope: the desktop app repo (custom 3D Slicer app), `BrainTwin_Native` benchmark harness, and the retiring `BrainTwin` / `EarTwin` web POCs.
 

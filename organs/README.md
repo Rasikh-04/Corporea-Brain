@@ -18,7 +18,7 @@ stub organ says "stub" in the UI and nobody can allege over-claiming.
 | `brain/manifest.yaml` | The brain, `implementation_level: deep`. |
 
 The schema itself is not a JSON Schema file. It is
-[`app/braintwin_core/organ_manifest.py`](../app/braintwin_core/organ_manifest.py), hand-written,
+[`app/corporea_core/organ_manifest.py`](../app/corporea_core/organ_manifest.py), hand-written,
 because [`docs/04`](../docs/04-ORGAN_MODULE_SPEC.md#registration) requires the **specific
 failing field** be reported. That module says `geometry.layers[1].mesh is required`, which
 sends someone to a line; a schema library says the document did not conform, which sends them

@@ -12,7 +12,7 @@ import copy
 from pathlib import Path
 
 import pytest
-from braintwin_core.organ_manifest import (
+from corporea_core.organ_manifest import (
     Severity,
     validate_directory,
     validate_file,

@@ -1,4 +1,4 @@
-# BrainTwin Desktop — the commit-level gate's dependency set.
+# Corporea-Brain — the commit-level gate's dependency set.
 #
 # docs/16-TESTING_STRATEGY.md#ci: "The commit-level set must stay fast. A slow commit gate
 # gets bypassed, and the three cross-cutting assertions live in it precisely because they

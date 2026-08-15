@@ -1,4 +1,4 @@
-"""BrainTwin Desktop offline imaging pipeline.
+"""Corporea-Brain offline imaging pipeline.
 
 Runs outside Slicer, in its own Python 3.12 environment. Nothing in this package imports
 ``slicer``, ``vtk``, ``ctk`` or ``qt``, which is what makes the unit test layer in

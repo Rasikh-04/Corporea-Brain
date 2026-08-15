@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
-from braintwin_pipeline.orientation import (
+from corporea_pipeline.orientation import (
     Axis,
     OrientationError,
     Pole,

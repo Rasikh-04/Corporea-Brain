@@ -1,4 +1,4 @@
-# CLAUDE.md — BrainTwin Desktop
+# CLAUDE.md — Corporea-Brain
 
 Read fully at the start of every session. This file is the standing contract. It is
 deliberately short; depth lives in `docs/`, indexed at [`docs/00-INDEX.md`](docs/00-INDEX.md).

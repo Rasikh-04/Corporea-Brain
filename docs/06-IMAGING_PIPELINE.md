@@ -211,7 +211,7 @@ look fine.
 **The control:**
 
 1. A synthetic **asymmetric phantom volume** with unmistakable, deliberately lopsided markers.
-   It is a **deterministic generator**, [`pipeline/braintwin_pipeline/phantom.py`](../pipeline/braintwin_pipeline/phantom.py),
+   It is a **deterministic generator**, [`pipeline/corporea_pipeline/phantom.py`](../pipeline/corporea_pipeline/phantom.py),
    and not a committed binary. See below for why.
 2. The phantom carries **a marker on each of three anatomical poles**, left, anterior and
    superior. One marker leaves two axes unguarded, and a superior/inferior flip invalidates a

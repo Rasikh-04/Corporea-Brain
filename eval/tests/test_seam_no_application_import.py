@@ -28,7 +28,7 @@ pytestmark = pytest.mark.seam
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
 # Import machinery, not the application. Everything else under these names is forbidden.
-FORBIDDEN_PREFIXES = ("slicer", "vtk", "ctk", "qt", "PythonQt", "braintwin_core")
+FORBIDDEN_PREFIXES = ("slicer", "vtk", "ctk", "qt", "PythonQt", "corporea_core")
 
 # Substituted with str.replace rather than str.format, because the probe itself contains
 # braces that format would try to interpret.
@@ -39,8 +39,8 @@ import sys
 
 __IMPORTS__
 
-for module in pkgutil.iter_modules(braintwin_eval.__path__):
-    importlib.import_module("braintwin_eval." + module.name)
+for module in pkgutil.iter_modules(corporea_eval.__path__):
+    importlib.import_module("corporea_eval." + module.name)
 
 forbidden = __FORBIDDEN__
 leaked = sorted(
@@ -67,12 +67,12 @@ def run_probe(imports: str) -> subprocess.CompletedProcess[str]:
 
 
 def test_importing_the_harness_pulls_in_no_part_of_the_application() -> None:
-    completed = run_probe("import braintwin_eval")
+    completed = run_probe("import corporea_eval")
     assert completed.returncode == 0, completed.stderr
 
     leaked = [line for line in completed.stdout.splitlines() if line.strip()]
     assert not leaked, (
-        "seam 4 is broken. Importing braintwin_eval pulled in: "
+        "seam 4 is broken. Importing corporea_eval pulled in: "
         + ", ".join(leaked)
         + ". The harness must run against file artifacts and CLI modules only, so that the "
         "results chapter can be reproduced by someone who has not built the application."
@@ -86,6 +86,6 @@ def test_the_probe_would_notice_a_violation() -> None:
     same machinery reports it. Without this, a typo in ``FORBIDDEN_PREFIXES`` would leave a
     green test guarding nothing.
     """
-    completed = run_probe("import braintwin_eval, braintwin_core")
+    completed = run_probe("import corporea_eval, corporea_core")
     assert completed.returncode == 0, completed.stderr
-    assert "braintwin_core" in completed.stdout
+    assert "corporea_core" in completed.stdout

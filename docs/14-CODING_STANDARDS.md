@@ -68,9 +68,9 @@ The three rules that prevent most crashes in Slicer extension work:
 ## MRML node conventions
 
 - Node names are for humans; **node ids are for code**. Never look a node up by name.
-- Every node we create carries our attribute namespace: `BrainTwin.<key>`. This is how our
+- Every node we create carries our attribute namespace: `Corporea.<key>`. This is how our
   nodes are distinguishable from a user's and from another extension's.
-- Every derived node carries `BrainTwin.artifactId` linking it to the `DerivedArtifact` row.
+- Every derived node carries `Corporea.artifactId` linking it to the `DerivedArtifact` row.
   A node with no artifact id is a leak in the provenance chain.
 - Scene state is not a database. The record store is the database. A node holds a reference,
   not the truth.

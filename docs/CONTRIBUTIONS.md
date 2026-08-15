@@ -45,7 +45,7 @@ Every team member should be able to say this without looking.
 | Ranked attribution with explicit uncertainty | The uncertainty statement names the specific active error sources per case — registration residual, partial volume, mass-effect distortion — rather than a generic caveat | Not started |
 | Mass-effect detection and downstream flagging | Quantifies midline shift and local distortion, then flags every derived output above a declared threshold instead of silently reporting normal-anatomy labels | Not started |
 | Substitution recording | When a site has no geometry in the atlas, the highlight is moved and the substitution is recorded and displayed, never silently approximated | Not started |
-| The orientation assertion harness | A generated asymmetric phantom, asserted in world space rather than voxel space, pushed through every geometry stage as a CI gate | **Built.** `pipeline/braintwin_pipeline/`, 73 tests. Not yet wired to any geometry stage, because none exists |
+| The orientation assertion harness | A generated asymmetric phantom, asserted in world space rather than voxel space, pushed through every geometry stage as a CI gate | **Built.** `pipeline/corporea_pipeline/`, 73 tests. Not yet wired to any geometry stage, because none exists |
 
 <a id="structures"></a>
 

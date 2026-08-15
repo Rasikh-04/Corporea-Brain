@@ -1,4 +1,4 @@
-# BrainTwin Desktop — pipeline Python dependencies
+# Corporea-Brain — pipeline Python dependencies
 #
 # Direct dependencies only. Every pin is exact, per docs/15-BUILD_AND_ENVIRONMENT.md.
 # "Latest" silently changes results between runs, which is a reproducibility failure that
@@ -48,7 +48,7 @@ matplotlib==3.11.1
 
 # --- Organ manifests (docs/04) ------------------------------------------------
 # Manifests are YAML because docs/04 specifies organs/<organ>/manifest.yaml. Validation
-# itself is hand-written in app/braintwin_core/organ_manifest.py rather than delegated to
+# itself is hand-written in app/corporea_core/organ_manifest.py rather than delegated to
 # jsonschema: docs/04 requires the specific failing field be reported, and a hand-written
 # check says "geometry.layers[1].mesh is missing" where a schema library says the document
 # failed. Licence register entry in docs/13.

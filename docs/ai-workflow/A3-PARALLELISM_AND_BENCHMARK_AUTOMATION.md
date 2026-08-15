@@ -1,5 +1,5 @@
 # Parallelism, Benchmarking and Local-Automation Policy
-### BrainTwin — Qt/C++/VTK on 3D Slicer (FYP)
+### Corporea-Brain — Qt/C++/VTK on 3D Slicer (FYP)
 
 Sources read (all files, in full):
 

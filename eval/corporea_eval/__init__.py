@@ -1,4 +1,4 @@
-"""BrainTwin Desktop evaluation harness.
+"""Corporea-Brain evaluation harness.
 
 A shipped component with its own tests, not a notebook. Specified by
 ``docs/10-EVALUATION_PROTOCOL.md``.

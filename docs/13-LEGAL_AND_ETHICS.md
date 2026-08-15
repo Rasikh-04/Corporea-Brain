@@ -160,7 +160,7 @@ Shown at startup before any data loads, requiring acknowledgement, and repeated 
 the context bar. A UI bundle cannot remove it.
 
 > **Not for clinical use.**
-> BrainTwin Desktop is a research prototype developed as an undergraduate final year project.
+> Corporea-Brain is a research prototype developed as an undergraduate final year project.
 > It has not been evaluated or approved by any regulatory authority and is not a medical device.
 > It does not provide a diagnosis. All measurements are automated estimates carrying
 > uncertainty, and all clinical correlates shown are literature-derived hypotheses, not
