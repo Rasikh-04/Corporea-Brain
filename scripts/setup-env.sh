@@ -99,13 +99,24 @@ setup_python_env() {
 
   python -m pip install "${PIP_OPTS[@]}" --upgrade pip setuptools wheel
 
-  # torch first, from the CPU-only index, so the resolver cannot pull the CUDA build.
-  # See the rationale comment in pipeline/requirements.txt.
+  # torch from the CPU-only index. Installing it first does NOT stop the requirements install
+  # from replacing it: pip upgrades an already-installed package whenever a later requirement
+  # permits a newer one, and nnunetv2's `torch>=2.1.2,!=2.9.*` permits a great deal. This
+  # script previously claimed the ordering was the control, and on 2026-08-16 torch 2.8.0+cpu
+  # was duly replaced by 2.13.0+cu130 mid-install, pulling 16 nvidia-* packages and 3.8 GB
+  # onto a machine whose GPU cannot run nnU-Net 3D inference and which is already short of the
+  # disk the superbuild needs.
+  #
+  # pipeline/constraints.txt is the actual control. An exact pin including the +cpu local
+  # version cannot be upgraded by the resolver.
   say "Installing torch ${TORCH_VERSION} (CPU-only build)"
   python -m pip install "${PIP_OPTS[@]}" --index-url "${TORCH_CPU_INDEX}" "torch==${TORCH_VERSION}"
 
   say "Installing pipeline requirements"
-  python -m pip install "${PIP_OPTS[@]}" -r "${REPO_ROOT}/pipeline/requirements.txt"
+  python -m pip install "${PIP_OPTS[@]}" \
+    --extra-index-url "${TORCH_CPU_INDEX}" \
+    -c "${REPO_ROOT}/pipeline/constraints.txt" \
+    -r "${REPO_ROOT}/pipeline/requirements.txt"
 
   say "Freezing lock file"
   python -m pip freeze --exclude-editable > "${REPO_ROOT}/pipeline/requirements.lock.txt"

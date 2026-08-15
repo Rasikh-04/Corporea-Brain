@@ -1,0 +1,31 @@
+# BrainTwin Desktop — pip constraints for the pipeline install.
+#
+# A constraint is not a dependency. Nothing here is installed because it appears in this file;
+# these lines only bound what the resolver may choose when something else asks for the package.
+#
+# Why this file exists
+# --------------------
+# scripts/setup-env.sh installs torch from the CPU-only index before installing
+# requirements.txt, and for a while the comment there claimed that ordering meant "the resolver
+# cannot pull the CUDA build". It does not. pip upgrades an already-installed package whenever
+# a later requirement permits a newer one, and nnunetv2's `torch>=2.1.2,!=2.9.*` permits a
+# great deal.
+#
+# On 2026-08-16 that is exactly what happened. torch 2.8.0+cpu was replaced by 2.13.0+cu130
+# during the requirements install, which pulled in 16 nvidia-* packages and took the venv to
+# 5.8 GB, of which torch and nvidia are 3.8 GB. scripts/check-env.sh caught it. Nothing else
+# would have: everything imports, every test passes, and the only symptom is disk.
+#
+# That disk matters twice over. The reference machine's discrete GPU is an MX230 with 2 GB of
+# VRAM and cannot hold nnU-Net 3D inference, so the CUDA build is unusable weight; and the
+# machine is already short of the 60 GB the Slicer superbuild needs.
+#
+# An exact pin including the `+cpu` local version cannot be upgraded by the resolver, which is
+# what makes this hold where installation order did not.
+
+torch==2.8.0+cpu
+
+# torchvision arrives transitively: nnunetv2 -> dynamic-network-architectures -> timm.
+# Its version is tied to torch's, so it is pinned here rather than left to resolve against
+# PyPI, where the matching wheel is the CUDA-linked one and brings the nvidia tree back.
+torchvision==0.23.0+cpu

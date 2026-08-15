@@ -5,9 +5,9 @@ Overwrite it; do not append a history. History lives in git and in `docs/DECISIO
 
 ## Last updated
 
-2026-08-16 — first three commits on `main`. Phase 1 scaffolding is complete: the orientation
-assertion, the evaluation harness and the organ manifest validator all exist and pass. Still
-no application code, and that is on plan.
+2026-08-16 — Phase 1 scaffolding complete and the environment green. The orientation
+assertion, the evaluation harness and the organ manifest validator all exist and pass;
+`check-env.sh` reports 0 fail. Still no application code, and that is on plan.
 
 ## Where the project is
 
@@ -47,10 +47,33 @@ seam 5 (the brain manifest carries `<PARCELLATION>`, not an atlas name).
 
 `scripts/check-env.sh` steps 4, 5 and 6 now run the real tests instead of printing SKIP.
 
-**The environment is still installing.** `scripts/setup-env.sh` has been running since 20:28
-and pip is still downloading; `check-env.sh` reports 9 fail, 4 warn against an incomplete venv.
-The phase 1 code above was verified in a throwaway venv, not in `.venv`. **Re-run
-`scripts/check-env.sh` once the install finishes** and confirm 4, 5 and 6 go green there too.
+**The environment is green.** `scripts/setup-env.sh` finished, and `scripts/check-env.sh`
+reports **0 fail, 3 warn** in `.venv`, with steps 4, 5 and 6 passing there.
+`pipeline/requirements.lock.txt` is committed: 103 packages, exact.
+
+The three remaining warns are known and unchanged: 15 GiB RAM against a 16 GiB minimum, Fedora
+44's CMake 4.x, and a system Qt on `PATH`. All three matter only to the superbuild, and all
+three are in the table in [`docs/15`](docs/15-BUILD_AND_ENVIRONMENT.md).
+
+### What check-env.sh caught on its first real run
+
+It earned itself immediately. The requirements install had **silently replaced torch
+2.8.0+cpu with 2.13.0+cu130**, pulling 16 nvidia packages and taking `.venv` to 5.8 GB.
+
+The cause is worth remembering, because it will recur. `setup-env.sh` installed torch from the
+CPU-only index *first*, and a comment claimed that ordering meant the resolver could not pull
+the CUDA build. It does not: pip upgrades an already-installed package whenever a later
+requirement permits a newer one, and nnunetv2's `torch>=2.1.2,!=2.9.*` permits a great deal.
+
+Nothing else would have caught it. Every package imported, every test passed, and the only
+symptom was disk on a machine already short of the superbuild's 60 GB.
+
+Fixed by [`pipeline/constraints.txt`](pipeline/constraints.txt), an exact pin including the
+`+cpu` local version, which the resolver cannot upgrade past. `check-env.sh` now hard-fails on
+a non-CPU torch rather than warning, and separately counts `nvidia-*` packages, because pip
+does not remove packages that stop being needed and torch's version string can read correctly
+while an orphaned CUDA tree sits on disk. Cleanup reclaimed 3.8 GB: `.venv` is 2.0 GB and free
+disk went from 33 GB to 36 GB.
 
 ## Decisions that are closed
 
@@ -86,13 +109,6 @@ document and the code disagreeing is the worse of the three options.
 
 ## Immediate next actions
 
-0. **Finish `scripts/setup-env.sh`.** Still running as of this handoff. python3.12, dcm2niix
-   and ccache are installed and torch 2.8.0+cpu is in the venv; the requirements download is
-   slow on this link and has failed once mid-download, reported as a missing package. If it
-   fails again, re-run it; pip resumes from cache. Then run `scripts/check-env.sh` and
-   confirm steps 4, 5 and 6 pass in `.venv`, and commit `pipeline/requirements.lock.txt`.
-   Note `PyYAML==6.0.3` was added to `pipeline/requirements.txt` **after** this install
-   started, so it will need a second `pip install -r`.
 1. **Run the orientation exercise by hand, once, and write it down.** This is the highest
    value item on the list and it is now cheap, because the tooling exists.
    `scripts/make_phantom.py --out build/phantom.nii.gz`, then the same with
@@ -103,7 +119,7 @@ document and the code disagreeing is the worse of the three options.
 2. **Close ADR-006.** Now the top blocker. The brain manifest carries `<PARCELLATION>`, the
    pipeline cannot name a space, and every deferred check in `validate_organs.py` points at
    it. Nothing in the pipeline can be written correctly before it closes.
-3. Slicer superbuild, **still deferred on disk and still not blocking**. ~40 GB free against
+3. Slicer superbuild, **still deferred on disk and still not blocking**. 36 GB free against
    a 60 GB minimum, and `~/Projects` is 18 GB of largely stale archives. When disk is freed,
    gate with `scripts/check-env.sh --superbuild` before configuring. `<PINNED_REVISION>` in
    [`docs/15`](docs/15-BUILD_AND_ENVIRONMENT.md) is still a placeholder: pick and record the
@@ -112,7 +128,7 @@ document and the code disagreeing is the worse of the three options.
 5. Prune the ECC surface per
    [`docs/ai-workflow/A2-CONTEXT_BUDGET_AND_SESSION_HYGIENE.md`](docs/ai-workflow/A2-CONTEXT_BUDGET_AND_SESSION_HYGIENE.md).
 
-## Phase 2, when the environment is green
+## Phase 2
 
 Ordered so that each item has something already built to measure it.
 

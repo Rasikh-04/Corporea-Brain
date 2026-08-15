@@ -181,15 +181,31 @@ if [[ -x "$VENV_PY" ]]; then
     fi
   done
 
-  # The CUDA build is ~2.5 GB and unusable on a 2 GB-VRAM GPU. Catch an accidental install.
+  # The CUDA build is unusable on a 2 GB-VRAM GPU and costs several GB of disk on a machine
+  # that is already short of the superbuild's 60 GB. It arrives by accident, not by choice:
+  # see pipeline/constraints.txt.
   if "$VENV_PY" -c "import torch" >/dev/null 2>&1; then
     tver=$("$VENV_PY" -c "import torch;print(torch.__version__)" 2>/dev/null)
     if [[ "$tver" == *"+cpu"* ]]; then
       pass "torch is the CPU-only build (${tver})"
     else
-      warn "torch ${tver} is not the CPU-only build. The CUDA build costs ~2.5 GB of disk \
-and the reference machine's GPU cannot hold nnU-Net 3D inference."
+      fail "torch ${tver} is not the CPU-only build. The reference machine's GPU cannot hold \
+nnU-Net 3D inference, so this is pure disk cost. Re-run scripts/setup-env.sh --no-system, \
+which now constrains it, then remove the orphaned nvidia-* packages."
     fi
+  fi
+
+  # The direct signal, and the one that costs the disk. torch's version string can be right
+  # while an nvidia tree left over from an earlier install is still on disk, because pip does
+  # not remove packages that stop being needed.
+  nvidia_pkgs=$("$VENV_PY" -m pip list --format=freeze 2>/dev/null | grep -c '^nvidia-' || true)
+  if [[ "${nvidia_pkgs:-0}" -eq 0 ]]; then
+    pass "no nvidia-* packages in the venv"
+  else
+    venv_gb=$(du -sh "${REPO_ROOT}/.venv" 2>/dev/null | cut -f1)
+    fail "${nvidia_pkgs} nvidia-* packages in the venv (.venv is ${venv_gb}). Nothing here can \
+use them. Remove with: .venv/bin/pip uninstall -y \$(.venv/bin/pip list --format=freeze | \
+grep '^nvidia-' | cut -d= -f1)"
   fi
 
   if [[ -f "${REPO_ROOT}/pipeline/requirements.lock.txt" ]]; then
