@@ -19,6 +19,8 @@ register below is a living table; an empty cell is a risk.
 | SynthSeg | Check current | Often research-use restrictions | **Verify before release** |
 | ANTs / Elastix | BSD-style / Apache | Attribution | Yes |
 | dcm2niix | BSD-style | Attribution | Yes |
+| nibabel, pydicom, SimpleITK, numpy, scipy, pandas, matplotlib | BSD-style or Apache-2.0 | Attribution | Yes |
+| PyYAML | MIT | Attribution | Yes. Reads the organ manifests in `organs/`. |
 
 **Model weights are the trap.** A permissively-licensed framework frequently ships weights
 under a research-use-only or non-commercial term. The framework licence is not the weight

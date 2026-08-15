@@ -46,6 +46,14 @@ pandas==3.0.5
 # Metric implementations (Dice, HD95, ASSD) come from SimpleITK, already pinned above.
 matplotlib==3.11.1
 
+# --- Organ manifests (docs/04) ------------------------------------------------
+# Manifests are YAML because docs/04 specifies organs/<organ>/manifest.yaml. Validation
+# itself is hand-written in app/braintwin_core/organ_manifest.py rather than delegated to
+# jsonschema: docs/04 requires the specific failing field be reported, and a hand-written
+# check says "geometry.layers[1].mesh is missing" where a schema library says the document
+# failed. Licence register entry in docs/13.
+PyYAML==6.0.3
+
 # --- Test ---------------------------------------------------------------------
 pytest==9.1.1
 

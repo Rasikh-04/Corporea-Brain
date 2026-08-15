@@ -1,0 +1,79 @@
+# Brain, the deep organ. Specified by docs/04-ORGAN_MODULE_SPEC.md.
+#
+# This manifest describes an organ whose assets do not exist yet. That is deliberate: the
+# contract is what makes the platform claim structural, and it is worth having before there is
+# geometry to point it at. Nothing below asserts that a file is present. scripts/validate_organs.py
+# reports asset existence and checksums as DEFERRED rather than passing them silently.
+
+organ: brain
+display_name: "Brain"
+implementation_level: deep
+schema_version: 1
+
+geometry:
+  entry_mesh: assets/brain/shell.glb
+  layers:
+    - {id: cortex, mesh: assets/brain/cortex.glb}
+    - {id: deep-grey, mesh: assets/brain/deep-grey.glb}
+    - {id: ventricles, mesh: assets/brain/ventricles.glb}
+    - {id: white-matter-tracts, mesh: assets/brain/tracts.glb}
+    - {id: vasculature, mesh: assets/brain/vasculature.glb}
+
+# Placeholder, not a choice. ADR-006 selects the canonical coordinate space and the
+# parcellation atlas and is still open; architectural seam 5 forbids any module or asset
+# hard-coding one before it closes. docs/04 shows desikan-killiany, harvard-oxford and jhu-wm
+# as a worked example, and writing them here would settle by default a decision that has to be
+# defended at viva. Replace this single entry when ADR-006 lands.
+parcellations:
+  - <PARCELLATION>
+
+supported_modalities: [MR-T1, MR-T1CE, MR-T2, MR-FLAIR, MR-DWI, CT]
+
+disorders:
+  - ischemic_stroke
+  - glioma
+  - intracerebral_haemorrhage
+
+capabilities:
+  - segmentation
+  - attribution
+  - deficits
+  - navigation
+  - longitudinal
+
+provenance:
+  source: "Z-Anatomy 2.0 derived"
+  licence: "CC BY-SA 4.0"
+  licence_url: "https://creativecommons.org/licenses/by-sa/4.0/"
+  attribution_required: true
+  # No export script exists yet. A version string here would be a provenance claim about a
+  # tool that has never run, and rule 6 makes provenance the thing that must not be guessed.
+  generated_by: "NEEDS_SOURCE"
+  generated_on: "NEEDS_SOURCE"
+
+  known_gaps:
+    # The first two are recorded findings about the Z-Anatomy source, carried over from
+    # docs/04 and from the ear workstream. The third is not a finding. It is the absence of
+    # one, and it is here because an empty known_gaps list is a claim that the geometry is
+    # complete, and no one has yet looked at this geometry to make that claim.
+    - id: no-cerebral-veins
+      statement: "Dural sinuses are present. Cerebral veins are absent."
+      affects_layers: [vasculature]
+      consequence: "No vascular claim of any kind may be made from this model."
+
+    - id: cranial-nerves-clipped
+      statement: "Cranial nerves are clipped at the skull base."
+      affects_layers: [deep-grey]
+      consequence: "Cisternal and extracranial segments are not represented."
+
+    - id: geometry-not-yet-inventoried
+      statement: >-
+        TODO(neuro-review): the exported brain geometry has not been inventoried. Z-Anatomy is
+        known to name structures that exist only as label leader lines with no surface, which
+        the ear workstream discovered after a discovery document claimed otherwise. Until the
+        meshes are inventoried directly, the list above is incomplete by construction.
+      affects_layers: []
+      consequence: >-
+        Any structure named in the UI but absent from the geometry must be reported as
+        unavailable, never substituted onto a neighbour without recording the substitution in
+        the case file.

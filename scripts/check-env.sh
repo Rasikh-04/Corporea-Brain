@@ -172,7 +172,7 @@ VENV_PY="${REPO_ROOT}/.venv/bin/python"
 if [[ -x "$VENV_PY" ]]; then
   pass "venv present  $("$VENV_PY" --version 2>&1)"
 
-  for mod in nibabel pydicom SimpleITK ants nnunetv2 bids numpy scipy pandas torch; do
+  for mod in nibabel pydicom SimpleITK ants nnunetv2 bids numpy scipy pandas torch yaml pytest; do
     if "$VENV_PY" -c "import ${mod}" >/dev/null 2>&1; then
       ver=$("$VENV_PY" -c "import ${mod};print(getattr(${mod},'__version__','?'))" 2>/dev/null)
       pass "import ${mod}  ${ver}"
@@ -202,19 +202,54 @@ else
   fail "no venv at ${REPO_ROOT}/.venv. Run scripts/setup-env.sh."
 fi
 
-# --- Not yet checkable --------------------------------------------------------
-head_ "Verification steps from docs/15 that cannot run yet"
+# --- Verification steps from docs/15 ------------------------------------------
+head_ "Verification steps from docs/15"
 
 skip "1. custom application launches, disclaimer before any data  — no application built"
 skip "2. home module is the Body Layer                            — no application built"
 skip "3. sample volume from bench assets renders                  — no application built"
-skip "4. orientation assertion against the asymmetric phantom     — no phantom committed"
-skip "5. evaluation harness known-answer test (hand-computed Dice) — no harness built"
-skip "6. organ manifest validator reports brain manifest valid    — no validator built"
-skip "7. repeat 3-6 with the network disconnected                 — depends on 3-6"
+
+# Steps 4, 5 and 6 no longer need the application, and by rule 7 they were built first:
+# "build the measuring instrument before the thing it measures". Each runs the real test, not
+# a proxy for it, so a failure here is the same failure CI reports.
+run_pytest() {
+  local step="$1" selection="$2"
+  if [[ ! -x "$VENV_PY" ]]; then
+    skip "${step} — no venv; run scripts/setup-env.sh"
+    return
+  fi
+  if ! "$VENV_PY" -c "import pytest" >/dev/null 2>&1; then
+    skip "${step} — pytest not installed; run scripts/setup-env.sh --no-system"
+    return
+  fi
+  local output
+  if output=$("$VENV_PY" -m pytest -q "$selection" 2>&1); then
+    pass "${step}  ($(printf '%s' "$output" | tail -1))"
+  else
+    fail "${step}"$'\n'"$(printf '%s' "$output" | tail -20)"
+  fi
+}
+
+run_pytest "4. orientation assertion against the asymmetric phantom" \
+  "${REPO_ROOT}/pipeline/tests/test_phantom_orientation.py"
+run_pytest "5. evaluation harness known-answer test (hand-computed Dice)" \
+  "${REPO_ROOT}/eval/tests/test_metrics_known_answer.py"
+
+if [[ -x "$VENV_PY" ]] && "$VENV_PY" -c "import yaml" >/dev/null 2>&1; then
+  if organs_out=$("$VENV_PY" "${REPO_ROOT}/scripts/validate_organs.py" 2>&1); then
+    pass "6. organ manifest validator  ($(printf '%s' "$organs_out" | tail -1 | sed 's/^ *//'))"
+  else
+    fail "6. organ manifest validator"$'\n'"$organs_out"
+  fi
+else
+  skip "6. organ manifest validator — PyYAML not installed; run scripts/setup-env.sh --no-system"
+fi
+
+skip "7. repeat 3-6 with the network disconnected                 — depends on 3"
 
 printf '\n  Steps 4 and 5 are the two that fail silently. Nothing built on a broken\n'
-printf '  orientation or a broken metric is worth anything. Wire them up early.\n'
+printf '  orientation or a broken metric is worth anything, which is why they were\n'
+printf '  wired up before anything they measure existed.\n'
 
 # --- Summary ------------------------------------------------------------------
 head_ "Summary"
