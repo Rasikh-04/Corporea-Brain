@@ -1,0 +1,138 @@
+# BrainTwin Desktop
+#
+# Rule 8: never commit patient-derived data. Dataset use agreements forbid redistribution
+# and a public repo is a breach. Downloader scripts only, never the data.
+# .gitignore discipline is a review item on every PR that adds a path.
+#
+# The patient-data rules below are deliberately broad. A pattern that occasionally ignores
+# something harmless is correct; a gap that lets one DICOM through is not.
+
+# --- Patient-derived data and imaging formats ---------------------------------
+# Never committed, under any path, for any reason.
+*.dcm
+*.DCM
+*.ima
+*.IMA
+*.nii
+*.nii.gz
+*.mgz
+*.mgh
+*.mha
+*.mhd
+*.nrrd
+*.nhdr
+*.img
+*.hdr
+*.trk
+*.tck
+*.vtp
+*.vtk
+
+# Conventional locations for downloaded datasets and case working directories.
+data/
+datasets/
+cases/
+bids/
+sourcedata/
+derivatives/
+/phi/
+*_PHI*
+*_phi*
+
+# --- Model weights ------------------------------------------------------------
+# Segmentation weights are downloaded, never vendored. docs/03: "Owns no model weights
+# in-tree."
+weights/
+models/
+*.pth
+*.pt
+*.onnx
+*.ckpt
+*.h5
+nnUNet_raw/
+nnUNet_preprocessed/
+nnUNet_results/
+
+# --- Atlas and template assets ------------------------------------------------
+# Carry their own licences. See docs/13-LEGAL_AND_ETHICS.md. Fetched, not committed.
+atlases/
+templates/
+
+# --- Build output -------------------------------------------------------------
+build/
+build-*/
+Slicer-build/
+*-build/
+_build/
+CMakeCache.txt
+CMakeFiles/
+CMakeUserPresets.json
+cmake_install.cmake
+compile_commands.json
+install_manifest.txt
+*.o
+*.a
+*.so
+*.so.*
+*.dylib
+*.dll
+*.exe
+
+# --- Python -------------------------------------------------------------------
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# NOT ignored, deliberately: pipeline/requirements.lock.txt.
+# The lock file is the reproducibility artifact and must be committed.
+
+# --- Benchmark and evaluation output ------------------------------------------
+# Machine specifications in bench/machines/ ARE committed; raw capture output is not.
+bench/results/raw/
+bench/captures/
+eval/runs/
+eval/cache/
+
+# --- Pipeline cache -----------------------------------------------------------
+# Content-hash keyed stage cache. Regenerable by definition.
+.cache/
+pipeline/cache/
+
+# --- Secrets and local configuration ------------------------------------------
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+*.p12
+secrets.*
+config.local.*
+
+# --- Logs and audit -----------------------------------------------------------
+# The audit log may contain patient identifiers. docs/12.
+*.log
+logs/
+audit/
+
+# --- Editor and OS ------------------------------------------------------------
+.vscode/
+!.vscode/extensions.json
+.idea/
+*.swp
+*~
+.DS_Store
+Thumbs.db
+
+# --- Agent and session scratch ------------------------------------------------
+.claude/settings.local.json
+scratchpad/
+
+# Scratch notes, not part of the documentation set
+docs/.ignore/
