@@ -31,8 +31,19 @@ Everything we originate is tracked in [`docs/CONTRIBUTIONS.md`](docs/CONTRIBUTIO
 
 ## Status
 
-Pre-development. No application code exists in this repository yet. The documentation set is
-complete enough to start Rung 0. Three predecessor efforts feed into it and are catalogued in
+Early development. No Slicer application code exists yet, which is on plan: rule 7 says build
+the measuring instrument before the thing it measures, so what exists first is the orientation
+assertion, the evaluation harness and the organ manifest validator. All of it is pure Python,
+headless, and runs in about two seconds.
+
+```bash
+scripts/setup-env.sh          # once per machine
+scripts/check-env.sh          # verify, including the assertions below
+.venv/bin/python -m pytest    # 176 tests
+```
+
+Current state, and what to read next, is in [`HANDOFF.md`](HANDOFF.md). Three predecessor
+efforts feed into this repository and are catalogued in
 [`docs/18-POC_INHERITANCE.md`](docs/18-POC_INHERITANCE.md):
 
 | Repository | What it was | Status |
