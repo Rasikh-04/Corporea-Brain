@@ -5,7 +5,8 @@ Overwrite it; do not append a history. History lives in git and in `docs/DECISIO
 
 ## Last updated
 
-2026-08-16 — Phase 1 scaffolding complete and the environment green. The orientation
+2026-08-16 — Phase 2 started: CI and linting are wired and green (Phase 2 items 1 and 2,
+below). Phase 1 scaffolding was already complete and the environment green. The orientation
 assertion, the evaluation harness and the organ manifest validator all exist and pass;
 `check-env.sh` reports 0 fail. Still no application code, and that is on plan.
 
@@ -138,13 +139,29 @@ fatal one. Written as it was, the document would have led someone to build the w
 
 Ordered so that each item has something already built to measure it.
 
-1. **CI.** Everything above runs in about two seconds and none of it runs automatically. The
-   commit-level gate in [`docs/16`](docs/16-TESTING_STRATEGY.md#ci) is the orientation
-   assertion, the metric known-answer test, the manifest validator and the linters. Wire it
-   before the test count grows enough that a red run is normal.
-2. **Linters and formatters.** [`docs/14`](docs/14-CODING_STANDARDS.md#python) requires PEP 8
-   enforced by a formatter and a linter in CI, and type hints that are checked rather than
-   decorative. None of that is configured yet.
+1. **CI. Done, 2026-08-16.** [`.github/workflows/ci.yml`](.github/workflows/ci.yml) runs on
+   every push and PR: `ruff check`, `ruff format --check`, `mypy`, `pytest` (which is the
+   orientation assertion and the metric known-answer test, run as ordinary markers, not a
+   separate job) and the organ manifest validator. Installs
+   [`pipeline/requirements-ci.txt`](pipeline/requirements-ci.txt), which is the five packages
+   the tree actually imports plus pytest, ruff and mypy — not the 109-package lock, because
+   `docs/16` requires the commit set stay fast and because the lock's `torch==2.8.0+cpu` is a
+   CPU-index local version that plain PyPI cannot resolve. `test_ci_requirements_match_lock.py`
+   holds the two files at the same versions so a green gate is green against what the pipeline
+   environment runs. Not yet in the gate, because nothing exists to run: the PHI-in-logs
+   assertion (item 5 below) and the UI bundle lint (`docs/09`). The PR- and nightly-level gates
+   in [`docs/16`](docs/16-TESTING_STRATEGY.md#ci) need a built application and stay out of
+   scope until one exists.
+2. **Linters and formatters. Done, 2026-08-16.** [`docs/14`](docs/14-CODING_STANDARDS.md#python)
+   requires PEP 8 enforced by a formatter and a linter, and type hints that are checked rather
+   than decorative. `pyproject.toml` configures `ruff` (`E`, `F`, `I`, `UP`, `B`) as both
+   linter and formatter, and `mypy` with `disallow_untyped_defs` over the four packages.
+   `ruff==0.16.3` and `mypy==2.3.1` are pinned in `pipeline/requirements.txt`. Twelve pre-
+   existing lint findings fixed: unsorted imports, two lines over the 100-column limit, a
+   bare `zip()` without `strict=`, and two `class X(str, Enum)` moved to `StrEnum`. Nine files
+   reformatted for the 100-column width. The `StrEnum` move is the only one that changes any
+   output: `f"{Level.STUB}"` is now `"stub"` rather than `"Level.STUB"`, which is why ruff
+   classifies `UP042` as an unsafe fix. Nothing formats either enum without `.value` today.
 3. **Pipeline stage 3, reorientation and resampling.** `reorient()` already exists and is
    tested against 48 storage orders. Resampling is the missing half, and it is where marker
    voxel counts start to change.

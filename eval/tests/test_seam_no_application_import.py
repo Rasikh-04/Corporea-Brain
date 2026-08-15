@@ -53,9 +53,7 @@ print("\\n".join(leaked))
 
 
 def probe_source(imports: str) -> str:
-    return PROBE.replace("__IMPORTS__", imports).replace(
-        "__FORBIDDEN__", repr(FORBIDDEN_PREFIXES)
-    )
+    return PROBE.replace("__IMPORTS__", imports).replace("__FORBIDDEN__", repr(FORBIDDEN_PREFIXES))
 
 
 def run_probe(imports: str) -> subprocess.CompletedProcess[str]:

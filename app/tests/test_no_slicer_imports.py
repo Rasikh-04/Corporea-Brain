@@ -14,9 +14,8 @@ from __future__ import annotations
 import importlib
 import pkgutil
 
-import pytest
-
 import braintwin_core
+import pytest
 
 pytestmark = pytest.mark.seam
 

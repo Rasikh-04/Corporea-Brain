@@ -59,7 +59,9 @@ def main(argv: list[str] | None = None) -> int:
     total = len(reports)
     print(f"\n  {total - invalid} of {total} manifests valid")
     if invalid:
-        print("  A manifest that fails validation excludes its organ. It is never silently skipped.")
+        print(
+            "  A manifest that fails validation excludes its organ. It is never silently skipped."
+        )
     return 1 if invalid else 0
 
 

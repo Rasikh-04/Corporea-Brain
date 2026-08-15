@@ -12,7 +12,6 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
-
 from braintwin_eval.aggregate import UndefinedPolicy, summarise
 from braintwin_eval.metrics import (
     Degeneracy,
@@ -135,9 +134,7 @@ class TestCallerMistakes:
 
 
 class TestAggregationCannotDropFailuresQuietly:
-    def test_undefined_results_fail_loudly_under_the_fail_policy(
-        self, empty, single_voxel
-    ) -> None:
+    def test_undefined_results_fail_loudly_under_the_fail_policy(self, empty, single_voxel) -> None:
         results = [
             hd95(single_voxel, single_voxel, ISOTROPIC),
             hd95(empty, single_voxel, ISOTROPIC),
@@ -145,9 +142,7 @@ class TestAggregationCannotDropFailuresQuietly:
         with pytest.raises(ValueError, match="undefined and the policy is FAIL"):
             summarise(results, undefined=UndefinedPolicy.FAIL)
 
-    def test_excluding_them_still_reports_how_many_were_excluded(
-        self, empty, single_voxel
-    ) -> None:
+    def test_excluding_them_still_reports_how_many_were_excluded(self, empty, single_voxel) -> None:
         # docs/10: silently dropping unprocessable cases inflates every number in the table
         # and is the easiest thing for an examiner to catch.
         results = [
@@ -186,9 +181,7 @@ class TestAggregationCannotDropFailuresQuietly:
 
         numpy's linear-interpolation percentiles give median 0.6, q25 0.4, q75 0.8.
         """
-        results = [
-            dice(*_masks_scoring(numerator=n)) for n in (1, 2, 3, 4, 5)
-        ]
+        results = [dice(*_masks_scoring(numerator=n)) for n in (1, 2, 3, 4, 5)]
         summary = summarise(results, undefined=UndefinedPolicy.EXCLUDE)
         assert summary.median == pytest.approx(0.6)
         assert summary.iqr_low == pytest.approx(0.4)

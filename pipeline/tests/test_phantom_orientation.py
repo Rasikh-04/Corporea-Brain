@@ -15,7 +15,6 @@ import itertools
 
 import numpy as np
 import pytest
-
 from braintwin_pipeline.orientation import (
     Axis,
     OrientationError,
@@ -102,16 +101,13 @@ class TestMarkersLandWhereTheyWereHandComputed:
     """
 
     @pytest.mark.parametrize("marker", PHANTOM_MARKERS, ids=lambda m: m.label)
-    def test_centre_of_mass_matches_the_hand_computed_millimetres(
-        self, phantom, marker
-    ) -> None:
+    def test_centre_of_mass_matches_the_hand_computed_millimetres(self, phantom, marker) -> None:
         check = next(
-            c for c in orientation_report(phantom.data, phantom.affine).checks
+            c
+            for c in orientation_report(phantom.data, phantom.affine).checks
             if c.label == marker.label
         )
-        assert check.centre.as_tuple() == pytest.approx(
-            marker.expected_centre_mm.as_tuple()
-        )
+        assert check.centre.as_tuple() == pytest.approx(marker.expected_centre_mm.as_tuple())
 
     @pytest.mark.parametrize("marker", PHANTOM_MARKERS, ids=lambda m: m.label)
     def test_voxel_count_matches_the_box_volume(self, phantom, marker) -> None:
@@ -181,9 +177,7 @@ class TestABrokenOrientationIsCaught:
     def test_a_flip_without_the_affine_update_fails_the_assertion(
         self, phantom, voxel_axis, label, expected_wrong_pole
     ) -> None:
-        broken_data, broken_affine = break_orientation(
-            phantom.data, phantom.affine, voxel_axis
-        )
+        broken_data, broken_affine = break_orientation(phantom.data, phantom.affine, voxel_axis)
         report = orientation_report(broken_data, broken_affine)
 
         assert not report.passed

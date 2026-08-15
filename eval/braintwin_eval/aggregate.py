@@ -17,9 +17,9 @@ raises or, worse, quietly produces a number from the ones that happened to work.
 from __future__ import annotations
 
 from collections import Counter
+from collections.abc import Sequence
 from dataclasses import dataclass
 from enum import Enum
-from typing import Sequence
 
 import numpy as np
 
@@ -116,8 +116,4 @@ def summarise(
 def _count_degeneracies(results: Sequence[MetricResult]) -> dict[str, int]:
     """Every degeneracy present, including ``none``. Rule 4: rank, never suppress."""
     counts = Counter(result.degeneracy for result in results)
-    return {
-        degeneracy.value: counts[degeneracy]
-        for degeneracy in Degeneracy
-        if counts[degeneracy]
-    }
+    return {degeneracy.value: counts[degeneracy] for degeneracy in Degeneracy if counts[degeneracy]}

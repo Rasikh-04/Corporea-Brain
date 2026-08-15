@@ -1,0 +1,33 @@
+[tool.ruff]
+# Scope: our own Python — the pipeline, the evaluation harness, the core package and
+# scripts. Never Slicer/VTK/ITK, and never anything under build/ or organs/ (data, not
+# code). docs/16-TESTING_STRATEGY.md#coverage draws the same line for coverage targets.
+line-length = 100
+target-version = "py312"
+extend-exclude = ["build"]
+
+[tool.ruff.lint]
+# E/F: pycodestyle + pyflakes, the PEP 8 baseline docs/14-CODING_STANDARDS.md#python asks
+# for. I: import sorting. UP: modernise to the target version. B: common bug patterns.
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.ruff.lint.per-file-ignores]
+# Tests assert on private members and use star-free wildcards from fixtures; none of the
+# selected rules need relaxing there today.
+
+[tool.ruff.format]
+# Formatter is ruff format, not black — one tool for both jobs docs/14 asks for.
+quote-style = "double"
+
+[tool.mypy]
+# docs/14-CODING_STANDARDS.md#python: "Type hints on every public function. Checked, not
+# decorative." Scoped to our packages, not third-party stubs we do not own.
+python_version = "3.12"
+files = ["pipeline/braintwin_pipeline", "eval/braintwin_eval", "app/braintwin_core", "scripts"]
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+warn_unused_ignores = true
+warn_redundant_casts = true
+no_implicit_optional = true
+ignore_missing_imports = true

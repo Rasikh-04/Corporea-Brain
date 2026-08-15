@@ -23,7 +23,7 @@ standing for something nobody verified.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import StrEnum
 from pathlib import Path
 from typing import Any, Final
 
@@ -57,9 +57,7 @@ APPROVED_LICENCES: Final[frozenset[str]] = frozenset(
 CAPABILITIES_BY_LEVEL: Final[dict[str, frozenset[str]]] = {
     "stub": frozenset(),
     "shallow": frozenset({"navigation"}),
-    "deep": frozenset(
-        {"segmentation", "attribution", "deficits", "navigation", "longitudinal"}
-    ),
+    "deep": frozenset({"segmentation", "attribution", "deficits", "navigation", "longitudinal"}),
 }
 
 REQUIRED_CAPABILITIES_BY_LEVEL: Final[dict[str, frozenset[str]]] = {
@@ -69,13 +67,18 @@ REQUIRED_CAPABILITIES_BY_LEVEL: Final[dict[str, frozenset[str]]] = {
 }
 
 
-class Level(str, Enum):
+# StrEnum, not `(str, Enum)`, and the difference is worth stating because it is the kind of
+# thing that changes output without changing behaviour anywhere a test looks. Under StrEnum,
+# `str(Level.STUB)` and `f"{Level.STUB}"` are `"stub"`; under `(str, Enum)` they are
+# `"Level.STUB"`. Manifest field values are what these mean, so the StrEnum reading is the
+# one that is right when a level or a severity reaches a message or a report.
+class Level(StrEnum):
     STUB = "stub"
     SHALLOW = "shallow"
     DEEP = "deep"
 
 
-class Severity(str, Enum):
+class Severity(StrEnum):
     """``ERROR`` excludes the organ. ``DEFERRED`` is a check that could not run.
 
     There is no ``WARNING``. A manifest is either loadable or it is not, and a middle category
@@ -182,9 +185,7 @@ def _check_identity(manifest: dict[str, Any]) -> list[Issue]:
 
     version = manifest.get("schema_version")
     if version != SCHEMA_VERSION:
-        issues.append(
-            Issue("schema_version", f"expected {SCHEMA_VERSION}, got {version!r}")
-        )
+        issues.append(Issue("schema_version", f"expected {SCHEMA_VERSION}, got {version!r}"))
     return issues
 
 
@@ -202,9 +203,7 @@ def _check_geometry(manifest: dict[str, Any], level: Any) -> list[Issue]:
     layers = geometry.get("layers")
     if layers is None:
         if level in {Level.DEEP.value, Level.SHALLOW.value}:
-            issues.append(
-                Issue("geometry.layers", f"is required for implementation_level {level}")
-            )
+            issues.append(Issue("geometry.layers", f"is required for implementation_level {level}"))
         return issues
 
     if not isinstance(layers, list):
@@ -355,7 +354,10 @@ def _check_level_dependent_lists(manifest: dict[str, Any], level: Any) -> list[I
         issues.append(Issue("parcellations", "is required for level deep; the first is default"))
     if level == Level.STUB.value and manifest.get("parcellations"):
         issues.append(
-            Issue("parcellations", "must be absent for a stub, which claims nothing below the surface")
+            Issue(
+                "parcellations",
+                "must be absent for a stub, which claims nothing below the surface",
+            )
         )
     return issues
 

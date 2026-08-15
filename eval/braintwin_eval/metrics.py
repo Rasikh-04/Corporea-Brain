@@ -289,9 +289,7 @@ def _hd95_from(forward: np.ndarray, backward: np.ndarray) -> float:
 
 
 def _assd_from(forward: np.ndarray, backward: np.ndarray) -> float:
-    return float(
-        (forward.sum() + backward.sum()) / (forward.size + backward.size)
-    )
+    return float((forward.sum() + backward.sum()) / (forward.size + backward.size))
 
 
 def _surface_of(mask: np.ndarray) -> np.ndarray:
@@ -315,9 +313,7 @@ def _distances_to(
     ``sampling=spacing_mm`` is the whole reason this is not a voxel count. Drop it and every
     surface metric silently becomes wrong by the anisotropy ratio.
     """
-    to_target = distance_transform_edt(
-        np.logical_not(target_surface), sampling=spacing_mm
-    )
+    to_target = distance_transform_edt(np.logical_not(target_surface), sampling=spacing_mm)
     return np.asarray(to_target)[source_surface]
 
 
@@ -331,9 +327,7 @@ def _degeneracy_of(n_prediction: int, n_reference: int) -> Degeneracy:
     return Degeneracy.NONE
 
 
-def _as_masks(
-    prediction: np.ndarray, reference: np.ndarray
-) -> tuple[np.ndarray, np.ndarray]:
+def _as_masks(prediction: np.ndarray, reference: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     predicted = np.asarray(prediction)
     referenced = np.asarray(reference)
     if predicted.shape != referenced.shape:

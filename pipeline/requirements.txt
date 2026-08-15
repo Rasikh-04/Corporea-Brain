@@ -57,6 +57,12 @@ PyYAML==6.0.3
 # --- Test ---------------------------------------------------------------------
 pytest==9.1.1
 
+# --- Lint and type-check (docs/16-TESTING_STRATEGY.md#ci, commit-level gate) --
+# ruff is both the linter and the formatter: docs/14-CODING_STANDARDS.md#python asks for
+# PEP 8 "enforced by a formatter and a linter", and one tool does both jobs here.
+ruff==0.16.3
+mypy==2.3.1
+
 # --- Not pinned yet, blocked on an open decision ------------------------------
 # PLACEHOLDER  parcellation backend (FastSurfer / SynthSeg) — blocked on ADR-006,
 #              canonical coordinate space and parcellation atlas. docs/06 stage 8.

@@ -12,7 +12,6 @@ import copy
 from pathlib import Path
 
 import pytest
-
 from braintwin_core.organ_manifest import (
     Severity,
     validate_directory,
@@ -147,9 +146,7 @@ class TestCapabilitiesAreGatedByLevel:
         }
         assert "capabilities" in fields_of(validate_manifest(manifest))
 
-    def test_an_absent_capabilities_list_is_not_the_same_as_an_empty_one(
-        self, valid_stub
-    ) -> None:
+    def test_an_absent_capabilities_list_is_not_the_same_as_an_empty_one(self, valid_stub) -> None:
         manifest = copy.deepcopy(valid_stub)
         del manifest["capabilities"]
         assert "capabilities" in fields_of(validate_manifest(manifest))

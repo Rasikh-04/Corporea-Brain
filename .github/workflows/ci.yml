@@ -1,0 +1,61 @@
+name: ci
+
+# The commit-level gate from docs/16-TESTING_STRATEGY.md#ci: unit tests (which include the
+# orientation assertion and the evaluation harness's known-answer test, run as ordinary
+# pytest markers rather than a separate job), linters, formatters, and the organ manifest
+# validator.
+#
+# Deliberately NOT here yet, because nothing exists to run: the PHI-in-logs assertion
+# (docs/16#pyramid) and the UI bundle lint (docs/09). Both are named in HANDOFF.md's Phase 2
+# list. A step that runs nothing and reports green would be worse than the gap being visible.
+#
+# No Slicer, no module tests, no golden-case or performance regression here — those need a
+# built application and belong to the PR- and nightly-level gates docs/16 describes, neither
+# of which this repository can run yet either.
+#
+# The environment is pipeline/requirements-ci.txt, not the full lock. That file's header has
+# the reasoning; the short version is that the gate must stay fast and the lock's torch pin
+# is a CPU-index local version that plain PyPI cannot resolve.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  commit-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: pipeline/requirements-ci.txt
+
+      # requirements-ci.txt, not the full lock: the gate installs only what the code under
+      # test imports, plus pytest, ruff and mypy. docs/16#ci requires this set stay fast, and
+      # the lock is 109 packages of which the tests touch five. The two files are held in
+      # agreement by pipeline/tests/test_ci_requirements_match_lock.py rather than by review.
+      - name: Install the gate's dependencies
+        run: python -m pip install --retries 10 --timeout 60 -r pipeline/requirements-ci.txt
+
+      - name: ruff check (lint)
+        run: ruff check pipeline eval app scripts
+
+      - name: ruff format (formatting, PEP 8)
+        run: ruff format --check pipeline eval app scripts
+
+      - name: mypy (type hints, checked not decorative)
+        run: mypy
+
+      - name: pytest (unit tests, includes the orientation assertion and known-answer test)
+        run: pytest
+
+      - name: organ manifest validator
+        run: python scripts/validate_organs.py

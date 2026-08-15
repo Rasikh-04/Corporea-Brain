@@ -316,6 +316,7 @@ def _draw_box(data: np.ndarray, marker: PhantomMarker) -> None:
         ("i", "j", "k"),
         (marker.i_range, marker.j_range, marker.k_range),
         PHANTOM_SHAPE,
+        strict=True,
     ):
         if not 0 <= low < high <= extent:
             raise ValueError(

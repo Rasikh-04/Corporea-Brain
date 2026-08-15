@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
-
 from braintwin_pipeline.orientation import (
     Axis,
     OrientationError,
@@ -124,9 +123,7 @@ class TestPoleOf:
             (WorldPoint(0.0, 0.0, 30.0), Axis.INFERIOR_SUPERIOR, Pole.SUPERIOR),
         ],
     )
-    def test_sign_selects_the_pole(
-        self, point: WorldPoint, axis: Axis, expected: Pole
-    ) -> None:
+    def test_sign_selects_the_pole(self, point: WorldPoint, axis: Axis, expected: Pole) -> None:
         assert pole_of(point, axis) is expected
 
     def test_exact_zero_is_the_neutral_plane_and_not_a_coin_toss(self) -> None:

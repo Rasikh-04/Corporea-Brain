@@ -1,0 +1,32 @@
+# BrainTwin Desktop — the commit-level gate's dependency set.
+#
+# docs/16-TESTING_STRATEGY.md#ci: "The commit-level set must stay fast. A slow commit gate
+# gets bypassed, and the three cross-cutting assertions live in it precisely because they
+# must never be bypassed."
+#
+# So this is not requirements.lock.txt. The lock is 109 packages and roughly 2 GB, most of it
+# torch, antspyx and nnunetv2. Nothing in app/, eval/, pipeline/ or scripts/ imports any of
+# them — the whole tree imports five third-party packages, listed below — and a gate that
+# spends minutes installing an ML stack to run a two-second suite is one somebody will
+# eventually route around.
+#
+# There is a second reason, narrower but sharper. The lock pins `torch==2.8.0+cpu`, and a
+# local version like `+cpu` is published only on the PyTorch CPU index, never on PyPI. Any
+# runner installing the lock without that extra index fails to resolve it. The pipeline
+# environment needs that index and scripts/setup-env.sh passes it; the gate needs neither the
+# index nor torch.
+#
+# Every pin here must appear identically in requirements.lock.txt. That is not left to
+# review: pipeline/tests/test_ci_requirements_match_lock.py asserts it, so the two files
+# cannot drift into disagreeing about what a green run was green against.
+
+# --- Imported by the code under test ------------------------------------------
+nibabel==5.4.2
+numpy==2.3.5
+scipy==1.15.3
+PyYAML==6.0.3
+
+# --- Test, lint and type-check ------------------------------------------------
+pytest==9.1.1
+ruff==0.16.3
+mypy==2.3.1
