@@ -53,7 +53,18 @@ head_() { printf '\n\033[1m%s\033[0m\n' "$*"; }
 # --- Machine ------------------------------------------------------------------
 head_ "Machine requirements"
 
+# Two filesystems, not one, because build/ may be a symlink onto another partition (see
+# scripts/link-workspace.sh). Measuring the repository root and calling it the build budget
+# was correct only while the two were the same directory tree, and it fails in the direction
+# that matters: it would report the 46 GB on / for a build that is going to land on an 18 GB
+# partition, and the superbuild would die partway with an error that does not name disk.
 disk_gb=$(df -BG --output=avail "$REPO_ROOT" | tail -1 | tr -dc '0-9')
+
+build_path="${REPO_ROOT}/build"
+[[ -e "$build_path" ]] || build_path="$REPO_ROOT"
+build_disk_gb=$(df -BG --output=avail "$build_path" | tail -1 | tr -dc '0-9')
+build_source=$(df --output=source "$build_path" | tail -1 | tr -d ' ')
+repo_source=$(df --output=source "$REPO_ROOT" | tail -1 | tr -d ' ')
 
 # Account for what this project already occupies, so the number below is the project's
 # real footprint rather than a guess. Missing paths contribute nothing.
@@ -75,15 +86,28 @@ fi
 
 # Gate 2: the superbuild. Deferred by default, because it is a separate spend on a separate
 # day and a shortfall here must not block environment work.
-if [[ "$disk_gb" -ge "$DISK_SUPERBUILD_GB" ]]; then
-  pass "disk free ${disk_gb} GB, enough for the Slicer superbuild (${DISK_SUPERBUILD_GB} GB)"
+#
+# Measured where the build will actually land. If build/ is a symlink onto another partition
+# the two numbers differ, and the one that decides whether the superbuild completes is this
+# one. A symlink moves the build; it does not pool free space across filesystems.
+if [[ "$build_source" != "$repo_source" ]]; then
+  printf '  \033[90mINFO\033[0m  build/ is on %s (%s GB free); the repository is on %s (%s GB free)\n' \
+    "$build_source" "$build_disk_gb" "$repo_source" "$disk_gb"
+fi
+
+if [[ "$build_disk_gb" -ge "$DISK_SUPERBUILD_GB" ]]; then
+  pass "disk free ${build_disk_gb} GB on ${build_source}, enough for the Slicer superbuild \
+(${DISK_SUPERBUILD_GB} GB)"
 elif [[ "$GATE_SUPERBUILD" -eq 1 ]]; then
-  fail "disk free ${disk_gb} GB, below the ${DISK_SUPERBUILD_GB} GB superbuild minimum \
-(docs/15-BUILD_AND_ENVIRONMENT.md, machine requirements table). The superbuild compiles its \
-own VTK, ITK, CTK, Qt and Python, and dies partway with an error that does not name disk."
+  fail "disk free ${build_disk_gb} GB on ${build_source}, below the ${DISK_SUPERBUILD_GB} GB \
+superbuild minimum (docs/15-BUILD_AND_ENVIRONMENT.md, machine requirements table). The \
+superbuild compiles its own VTK, ITK, CTK, Qt and Python, and dies partway with an error that \
+does not name disk. Free space on that filesystem, or move the build to one that has it: a \
+symlink relocates the build, it does not add the two partitions together."
 else
   printf '  \033[90mDEFER\033[0m %s\n' "superbuild needs ${DISK_SUPERBUILD_GB} GB, \
-${disk_gb} GB free. Not gated: pass --superbuild when you are ready to configure it."
+${build_disk_gb} GB free on ${build_source}. Not gated: pass --superbuild when you are ready \
+to configure it."
 fi
 
 ram_gb=$(free -g | awk '/^Mem:/{print $2}')

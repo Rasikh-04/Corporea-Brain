@@ -5,15 +5,19 @@ Overwrite it; do not append a history. History lives in git and in `docs/DECISIO
 
 ## Last updated
 
-2026-08-16 — Phase 2 started: CI and linting are wired and green (Phase 2 items 1 and 2,
-below). Phase 1 scaffolding was already complete and the environment green. The orientation
-assertion, the evaluation harness and the organ manifest validator all exist and pass;
-`check-env.sh` reports 0 fail. Still no application code, and that is on plan.
+2026-08-16 — **Phase 2 is closed.** All five items are done: CI, linters, pipeline stage 3,
+the results-table writers with Bland-Altman, and the PHI-in-logs assertion. 271 tests pass in
+under three seconds; ruff, mypy and the organ manifest validator are green. Three of the four
+cross-cutting assertions in `docs/16` now run on every commit; the fourth, the UI bundle lint,
+waits on a UI bundle existing. Still no application code, and that is on plan.
+
+The superbuild is still blocked on disk and the blocker is now measured rather than estimated.
+See "Disk, and why the workspace partition does not solve it" below.
 
 ## Where the project is
 
 The measuring instruments are built and the thing they measure is not, which is the ordering
-rule 7 demands. 178 tests pass in about two seconds against `pytest.ini`.
+rule 7 demands. 271 tests pass in under three seconds against `pytest.ini`.
 
 The two planning documents are settled at version 1 and mirrored under
 [`docs/research/`](docs/research/). The document set is complete and indexed at
@@ -126,9 +130,12 @@ fatal one. Written as it was, the document would have led someone to build the w
 2. **Close ADR-006.** Now the top blocker. The brain manifest carries `<PARCELLATION>`, the
    pipeline cannot name a space, and every deferred check in `validate_organs.py` points at
    it. Nothing in the pipeline can be written correctly before it closes.
-3. Slicer superbuild, **still deferred on disk and still not blocking**. 36 GB free against
-   a 60 GB minimum, and `~/Projects` is 18 GB of largely stale archives. When disk is freed,
-   gate with `scripts/check-env.sh --superbuild` before configuring. `<PINNED_REVISION>` in
+3. Slicer superbuild, **still deferred on disk and still not blocking**. 46 GB free on `/`
+   against a 60 GB minimum. The `workspace` partition does not close it and cannot; the
+   measured table and the three routes that do are in the disk section below and in
+   [`docs/15`](docs/15-BUILD_AND_ENVIRONMENT.md#disk-routes). Gate with
+   `scripts/check-env.sh --superbuild` before configuring — it now measures the filesystem
+   that holds `build/` rather than the repository root. `<PINNED_REVISION>` in
    [`docs/15`](docs/15-BUILD_AND_ENVIRONMENT.md) is still a placeholder: pick and record the
    revision before configuring, because changing it later is an ADR.
 4. Fill the track ownership table in the research plan Part 7.3. An empty cell is a risk.
@@ -162,14 +169,111 @@ Ordered so that each item has something already built to measure it.
    reformatted for the 100-column width. The `StrEnum` move is the only one that changes any
    output: `f"{Level.STUB}"` is now `"stub"` rather than `"Level.STUB"`, which is why ruff
    classifies `UP042` as an unsafe fix. Nothing formats either enum without `.value` today.
-3. **Pipeline stage 3, reorientation and resampling.** `reorient()` already exists and is
-   tested against 48 storage orders. Resampling is the missing half, and it is where marker
-   voxel counts start to change.
-4. **The results-table writers** for tables 4.1 to 4.6, and Bland-Altman for volume error.
-   The metrics exist; the thing that turns a list of them into the exact table that goes in
-   the thesis does not. Hand-transcribing numbers is how numbers drift.
-5. **The PHI-in-logs assertion**, the third cross-cutting test in
-   [`docs/16`](docs/16-TESTING_STRATEGY.md#pyramid). Needs a PHI-seeded synthetic study.
+3. **Pipeline stage 3, reorientation and resampling. Done, 2026-08-16.**
+   [`pipeline/corporea_pipeline/resample.py`](pipeline/corporea_pipeline/resample.py). The
+   output affine is built first, from the input direction cosines and the requested spacing,
+   and the sampling grid is then derived *from that affine* by mapping every output voxel back
+   through world space. There is deliberately no second place where the array and the affine
+   could be made to disagree. `run_stage3` reorients, resamples, and refuses to return a volume
+   whose geometry moved.
+
+   Three things were learned building it, and each changed the code.
+
+   - **The determinant-sign check belongs to the resample, not to the stage.** The first
+     version asserted the sign across the whole stage and failed on every correct run: `RAS` is
+     right-handed and `LAS` is left-handed, so rewriting one as the other legitimately flips
+     it. That is what stage 3 is *for*. The resample only rescales, so across it the sign is
+     invariant, and that is where the assertion now sits.
+   - **The world bounding box check does not catch a flip.** It catches an affine that was not
+     updated to match a grid that was, which is the classic dropped-affine resample. Data
+     flipped *with* its affine left intact moves no world coordinate the shape can see. Only a
+     marker finds that, which is the whole argument for the phantom.
+   - **Linear interpolation on a label volume is not caught by anything downstream.** The
+     expectation was that it would fail the orientation assertion. It does not: the blur erodes
+     a marker symmetrically, so its centre of mass stays put and laterality survives. What
+     actually happens is that it invents 121 intensity values that are not any label, and
+     erodes every marker by roughly a third, in a volume that passes every geometry check in
+     the repository. Hence `Interpolation` is a required argument with no default: the guard
+     has to be at the call site because there is no downstream guard.
+
+4. **The results-table writers. Done, 2026-08-16.**
+   [`eval/corporea_eval/tables.py`](eval/corporea_eval/tables.py) and
+   [`bland_altman.py`](eval/corporea_eval/bland_altman.py). All six tables from `docs/10` are
+   declared as data and rendered as markdown with a required version stamp.
+   `test_tables.py::test_every_table_matches_the_protocol_document` parses `docs/10` and
+   asserts every column header and row label is identical, so neither the document nor the code
+   can be redesigned without the other failing the gate.
+
+   Declared rows always print, as `pending` rather than as an absent line: rule 4 applies to
+   results tables most of all, because the size band the segmenter could not handle is exactly
+   the row a "skip empty rows" renderer would drop.
+
+   Bland-Altman reports bias, the 95% limits of agreement, and the correlation between the
+   differences and the case means, which is the standard proportional-bias check and the first
+   thing an examiner asks about. Cohorts under three cases are refused rather than degraded:
+   there is no honest table cell for limits of agreement over two cases. `BOTH_EMPTY` cases are
+   excluded and counted; every other degeneracy stays in, because dropping the total misses
+   would be the single most flattering thing the module could do.
+
+   One document change: `docs/10` specified tables 4.5 and 4.6 in prose rather than as tables,
+   so the drift test could only have covered four of six. They are now written out with
+   explicit columns, consistent with what the prose said.
+
+5. **The PHI-in-logs assertion. Done, 2026-08-16.**
+   [`pipeline/corporea_pipeline/phi.py`](pipeline/corporea_pipeline/phi.py), with a synthetic
+   study seeded in every field `docs/12` names as identified. It runs against the pipeline
+   output that exists — stage 3, its log at DEBUG, and its provenance record — and is written
+   so later stages join one test rather than needing a new one.
+
+   The design point: **an exact substring scan gives confident, wrong assurance.** PHI reaches
+   a log reformatted. A date seeded as `1974-03-02` arrives as `02/03/1974` or `19740302`; a
+   phone number arrives with different separators; a name arrives as the surname alone in an
+   export path. So each field expands into the forms it is plausibly written in, and numbers
+   are compared digit-only.
+
+   Two things that were wrong on the first pass and are worth remembering:
+
+   - **`\b` is the wrong anchor for a name.** `_` is a word character to `\b`, so a scanner
+     anchored on it finds no boundary in `SURNAME_19740302` and reports the directory as clean.
+     That is the single most common shape a leaked name arrives in, DICOM export trees being
+     named that way almost by convention. The guard now treats only letters and digits as word
+     characters, and drops entirely at an edge that is not alphanumeric, which `\b` also got
+     wrong for any needle starting with `/`.
+   - **Digit matching must be per run, not per document.** Stripping every non-digit from the
+     whole text welds unrelated numbers together, so `case 1974 step 0302` would report a date
+     of birth that is not there. A false positive here is not harmless: it is the kind of
+     finding that gets the check disabled.
+
+   Findings name the field and the form and never the value. The failure message goes into the
+   CI log of the run that caught the leak, and a PHI scanner whose own output is PHI has solved
+   nothing.
+
+## Disk, and why the workspace partition does not solve it
+
+Measured 2026-08-16. Table and the three routes to 60 GB are in
+[`docs/15`](docs/15-BUILD_AND_ENVIRONMENT.md#disk-routes).
+
+`/` has **46 GB free** against a 60 GB superbuild minimum. The `workspace` partition
+(`/dev/nvme0n1p6`) is **19.4 GB in total, 18 GB free**. Linking it into the repository does not
+close the gap and cannot: a symlink relocates a directory, it does not pool free space across
+filesystems. A build that lands there gets 18 GB.
+
+Two things changed so this is not re-litigated from an estimate next time.
+
+- [`scripts/link-workspace.sh`](scripts/link-workspace.sh) points `build/` at the workspace
+  partition. Worth doing — scratch volumes, the generated phantom and ccache grow without
+  bound and currently grow on the filesystem the superbuild has to fit into — but it buys
+  headroom on `/`, it does not replace it. Needs `sudo`, because `/mnt/workspace` is
+  root-owned. It has not been run.
+- `check-env.sh` now measures the filesystem that holds `build/`, not the repository root, and
+  names it in the verdict. Before this change, symlinking `build/` onto a small partition would
+  have produced a *more* optimistic number, which is the wrong direction for a check whose
+  failure mode is a superbuild dying partway with an error that does not mention disk.
+
+The recommended route is to free 14 GB on `/`: `~/.config` is 17 GB and `~/Projects` is 11 GB
+on a machine whose active project is 2 GB of it. The durable answer is to shrink the 72.8 GB
+NTFS `Data` partition and grow `workspace` into it, which needs gparted, a backup and an
+offline session.
 
 ## Known traps carried forward
 

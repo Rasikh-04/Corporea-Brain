@@ -36,6 +36,41 @@ so a machine that cannot yet host the superbuild can still hold a complete, veri
 development environment and run everything in `eval/` and `pipeline/` that does not need
 Slicer.
 
+<a id="disk-routes"></a>
+
+### Where the 60 GB comes from on Machine A
+
+Measured 2026-08-16. The superbuild is still deferred and this is why.
+
+| Filesystem | Label | Size | Free | Holds |
+|---|---|---|---|---|
+| `/dev/nvme0n1p3` | Linux | 145.3 GB | 46 GB | `/`, the repository, the venv |
+| `/dev/nvme0n1p6` | workspace | 19.4 GB | 18 GB | `/mnt/workspace`, empty |
+| `/dev/nvme0n1p4` | Data | 72.8 GB | not mounted | NTFS |
+| `/dev/sda2` | HDD | 465.6 GB | not mounted | NTFS, spinning disk |
+
+**A symlink does not pool free space.** `scripts/link-workspace.sh` points `build/` at the
+`workspace` partition, which is worth doing for scratch output and ccache, and it does not
+move the project any closer to 60 GB: a build that lands there gets 18 GB. `check-env.sh`
+measures the filesystem that holds `build/` for exactly this reason, so the number it prints
+is the number the superbuild will actually hit.
+
+The routes that do reach 60 GB, in the order they should be considered:
+
+1. **Free 14 GB on `/`.** The shortest path, and the only one that needs no partition work.
+   `~/.config` is 17 GB and `~/Projects` is 11 GB on a machine whose active project is 2 GB of
+   it. Re-measure with `check-env.sh --superbuild` afterwards rather than assuming.
+2. **Grow `workspace` into the `Data` partition.** `nvme0n1p4` is 72.8 GB of NTFS next to the
+   19.4 GB `workspace`; shrinking it and growing `nvme0n1p6` gives a dedicated ext4 build
+   partition with room to spare. Offline work with gparted, and it is destructive if
+   interrupted, so it needs a backup of `Data` first. This is the right long-term answer:
+   the superbuild is rebuilt many times over the project and it should not compete with `/`.
+3. **Build on the 465 GB HDD.** Space is not the constraint there, everything else is. It is
+   NTFS, so case sensitivity, permissions and symlinks all behave differently from what the
+   superbuild's external projects expect, and it is a spinning disk, which on a build that is
+   already measured in hours is the wrong trade. Reformatting it to ext4 removes the first
+   objection and not the second. Last resort.
+
 <a id="fedora"></a>
 
 ## Fedora setup

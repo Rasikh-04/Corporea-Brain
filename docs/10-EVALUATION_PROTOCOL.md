@@ -148,8 +148,26 @@ Fill these. Do not redesign them late.
 Plus: cold start s · installer size MB · sustained fps at declared volume size ·
 **network-disabled full-pipeline run: PASS / FAIL**.
 
-**Table 4.5 — Expert usefulness rubric (E5)** — mean [SD] over n cases, m clinicians, and
-**Table 4.6 — Usability** — SUS mean [SD], task completion rate, median task time.
+**Table 4.5 — Expert usefulness rubric (E5)**
+
+Mean [SD] over n cases and m clinicians, per rubric item. The five items are the claims the
+system makes about itself, so that a clinician disagreeing with one says which.
+
+| Rubric item | n cases | m clinicians | Mean [SD] |
+|---|---|---|---|
+| Findings are complete | | | |
+| Findings are correctly ranked | | | |
+| Region attribution is defensible | | | |
+| Uncertainty is communicated | | | |
+| Would use in a review meeting | | | |
+
+**Table 4.6 — Usability**
+
+| Measure | n participants | Value |
+|---|---|---|
+| SUS mean [SD] | | |
+| Task completion rate | | |
+| Median task time | | |
 
 <a id="attribution-protocol"></a>
 

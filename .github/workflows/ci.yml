@@ -1,13 +1,17 @@
 name: ci
 
 # The commit-level gate from docs/16-TESTING_STRATEGY.md#ci: unit tests (which include the
-# orientation assertion and the evaluation harness's known-answer test, run as ordinary
-# pytest markers rather than a separate job), linters, formatters, and the organ manifest
-# validator.
+# orientation assertion, the evaluation harness's known-answer test and the PHI-in-logs
+# assertion, run as ordinary pytest markers rather than as separate jobs), linters,
+# formatters, and the organ manifest validator.
 #
-# Deliberately NOT here yet, because nothing exists to run: the PHI-in-logs assertion
-# (docs/16#pyramid) and the UI bundle lint (docs/09). Both are named in HANDOFF.md's Phase 2
-# list. A step that runs nothing and reports green would be worse than the gap being visible.
+# Three of the four cross-cutting assertions in docs/16#pyramid now run here. The fourth, the
+# UI bundle lint (docs/09), is deliberately absent because there is no UI bundle to lint yet.
+# A step that runs nothing and reports green would be worse than the gap being visible.
+#
+# The PHI-in-logs assertion runs against the pipeline output that exists, which today is
+# stage 3, its log at DEBUG and its provenance sidecar. It is written so that later stages
+# join one test rather than needing a new one, per pipeline/tests/test_phi_in_logs.py.
 #
 # No Slicer, no module tests, no golden-case or performance regression here — those need a
 # built application and belong to the PR- and nightly-level gates docs/16 describes, neither
@@ -54,7 +58,7 @@ jobs:
       - name: mypy (type hints, checked not decorative)
         run: mypy
 
-      - name: pytest (unit tests, includes the orientation assertion and known-answer test)
+      - name: pytest (unit tests, includes the orientation, known-answer and PHI assertions)
         run: pytest
 
       - name: organ manifest validator

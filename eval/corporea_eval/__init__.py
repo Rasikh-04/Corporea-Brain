@@ -9,4 +9,4 @@ without a GUI. The seam is asserted mechanically by
 ``eval/tests/test_seam_no_application_import.py`` rather than left to reviewer vigilance.
 """
 
-__all__ = ["metrics", "aggregate"]
+__all__ = ["metrics", "aggregate", "bland_altman", "tables"]
