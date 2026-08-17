@@ -145,9 +145,12 @@ Third-party code policy · Review checklist.
 ### [`15-BUILD_AND_ENVIRONMENT.md`](15-BUILD_AND_ENVIRONMENT.md)
 From a clean machine to a running custom Slicer application.
 Sections: Machine requirements and the honest disk and RAM cost · Fedora · Ubuntu ·
-Windows · The Slicer superbuild · Building the custom application ·
-Building one module without rebuilding Slicer · ccache · Common build failures ·
-Python environment for the pipeline · Verifying the install · When a machine differs.
+Windows · The Slicer superbuild · Watching a running superbuild ·
+PythonQt wrapper generation on Qt 6 ·
+Static curl and libidn2 · Building the custom application ·
+Building one module without rebuilding Slicer ·
+ccache · Common build failures · Python environment for the pipeline ·
+Verifying the install · When a machine differs.
 
 ### [`16-TESTING_STRATEGY.md`](16-TESTING_STRATEGY.md)
 Test layers, what each is for, and the tests that are non-negotiable.
@@ -215,6 +218,7 @@ Adopted unchanged.
 | [ADR-007](DECISIONS/ADR-007-record-store.md) | Record store technology | Open |
 | [ADR-008](DECISIONS/ADR-008-ui-bundle-seam.md) | UI bundle seam, visual design deferred | Accepted |
 | [ADR-009](DECISIONS/ADR-009-web-poc-disposition.md) | Disposition of the web POC | Accepted |
+| [ADR-010](DECISIONS/ADR-010-slicer-pinned-revision.md) | Slicer superbuild pinned to v5.12.3 | Accepted |
 
 ---
 

@@ -25,8 +25,22 @@ available; the reference machine is for *measuring*, not necessarily for buildin
 
 **These figures are this project's own estimates, not an upstream Slicer specification.** The
 60 GB is the number to plan against, and it is the only place in this document set that states
-a disk minimum. Treat it as a planning figure to be replaced with a measurement once the first
-superbuild completes here.
+a disk minimum.
+
+**Measured 2026-08-17, on the first superbuild to complete on Machine A: the finished tree is
+6.9 GB**, being 6.7 GB of `Slicer-build/` and 199 MB of the `Slicer/` source clone. The largest
+components are VTK at 2.1 GB across source and build, the inner Slicer build at 1.3 GB, the
+built Python at 1.3 GB, and ITK at 616 MB.
+
+That is roughly a ninth of the planning figure, for three reasons that all have to hold: the
+superbuild is **Release**, it uses **system Qt** rather than building Qt, and **ccache** is
+active. A Debug build, or a platform where Qt has to be built, lands in a different order of
+magnitude, which is what the 60 GB was defending against.
+
+Two honest caveats. This is the size of the *finished* tree, not the *peak* during the build,
+which was never sampled and is higher wherever intermediate objects outlive their install
+step. And it is one machine and one configuration. Keep 60 GB as the planning minimum for an
+unknown machine; use 6.9 GB when reasoning about this one.
 
 **The 60 GB is a superbuild budget, not a project-wide one.** The development environment,
 meaning the pipeline venv and the system packages, costs roughly 8 GB and is independent of it.
@@ -40,7 +54,9 @@ Slicer.
 
 ### Where the 60 GB comes from on Machine A
 
-Measured 2026-08-16. The superbuild is still deferred and this is why.
+Measured 2026-08-16, when the superbuild was still deferred and this was why. Kept as the
+record of how the budget was reasoned about; the superbuild has since completed on this
+machine at a fraction of the cost, as recorded above.
 
 | Filesystem | Label | Size | Free | Holds |
 |---|---|---|---|---|
@@ -88,8 +104,24 @@ sudo dnf install cmake git ninja-build ccache \
   libxkbcommon-x11-devel patch dcm2niix python3.12 python3.12-devel
 ```
 
-Do **not** install a system Qt and expect Slicer to use it. The superbuild provides Qt. A
-system Qt on the path is a common source of a confusing mid-build failure.
+**Correction, verified 2026-08-16 against the pinned `v5.12.3` source directly.** Contrary to what
+this document used to say: **the superbuild does not provide Qt.** `CMakeLists.txt` always calls
+`find_package(Qt5 or Qt6)` against an existing installation; `Slicer_USE_SYSTEM_QT` only affects
+RPATH and launcher settings, not whether Qt is built. A system Qt is *required*, not a trap.
+
+Fedora 44 ships Qt5 as runtime-only, with no CMake config files — `find_package(Qt5)` cannot
+succeed no matter what is on `PATH`. It ships a complete Qt6 dev stack instead, and Slicer
+5.12.3 supports Qt6 (needs 6.8+) when pointed at it explicitly:
+
+```bash
+sudo dnf install qt6-qtsvg-devel qt6-qt5compat-devel qt6-qtscxml-devel \
+  qt6-qtwebengine-devel qt6-qtwebchannel-devel
+```
+
+`qt6-qtbase-devel` and several other Qt6 modules are already present on a typical Fedora 44
+workstation install; the five above are the ones Slicer's `Slicer_REQUIRED_QT_MODULES` list
+needs that are not. Configure with `-DQt6_DIR:PATH=/usr/lib64/cmake/Qt6
+-DSlicer_USE_SYSTEM_QT:BOOL=ON` — see the superbuild command below.
 
 ### Fedora 44 toolchain, measured 2026-08-15
 
@@ -139,17 +171,26 @@ sudo apt update && sudo apt install -y \
 
 ```bash
 git clone https://github.com/Slicer/Slicer.git
-cd Slicer && git checkout <PINNED_REVISION>
+cd Slicer && git checkout v5.12.3
 cd .. && mkdir Slicer-build && cd Slicer-build
 cmake -G Ninja \
   -DCMAKE_BUILD_TYPE:STRING=Release \
-  -DSlicer_USE_SYSTEM_QT:BOOL=OFF \
+  -DSlicer_USE_SYSTEM_QT:BOOL=ON \
+  -DQt6_DIR:PATH=/usr/lib64/cmake/Qt6 \
+  -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
   ../Slicer
-ninja
+ninja -j4
 ```
 
-`<PINNED_REVISION>` is recorded in this file and nowhere else. Changing it is an ADR, because
-it changes every downstream version.
+**Pinned revision: `v5.12.3`** (commit `9034c71a8fce68ab312458b3d7d16f610562263d`), decided in
+[ADR-010](DECISIONS/ADR-010-slicer-pinned-revision.md). Recorded in this file and in that ADR.
+Changing it is a new ADR, because it changes every downstream version.
+
+The `-DCMAKE_POLICY_VERSION_MINIMUM=3.5` flag works around the Fedora 44 CMake 4.x trap in the
+table below. The `-j4` caps parallel linking for machines under the 16 GB RAM comfortable
+minimum — see the same table. `-DQt6_DIR` and `-DSlicer_USE_SYSTEM_QT:BOOL=ON` are the Fedora 44
+Qt6 route explained in the Fedora setup section above; a platform with a real Qt5 dev install
+(Ubuntu, for instance) does not need either override.
 
 Notes:
 
@@ -158,6 +199,197 @@ Notes:
 - Do not run `ninja -j$(nproc)` on a 16 GB machine. Linking VTK and ITK in parallel will exhaust
   RAM and the failure looks like a compiler crash. Use `-j4` or fewer.
 - Configure `ccache` before the first build. It saves hours on every subsequent rebuild.
+
+<a id="watching-the-build"></a>
+
+### Watching a running superbuild
+
+The build runs for hours and both of its failure modes are quiet. It dies and nothing announces
+it, or it keeps running while free disk drains toward zero. Watching a terminal for either is
+not a plan, and the log tail is actively misleading, for the reason recorded under
+[common build failures](#failures).
+
+```bash
+scripts/build-status.sh        # one report: progress, target rate, ETA, disk
+scripts/build-watchdog.sh &    # arm; silent until something needs a human
+```
+
+The watchdog exits on `DISK_LOW`, `NEW_FAILURE`, `PROCESS_GONE` or `LOG_STALE`, so the process
+ending is the alert. It refuses to arm when no build is running, and on failure it reports a
+window around the failing line rather than the tail. Both scripts discover the ninja process
+and the progress counters from the build tree, so neither is pinned to a machine or a run.
+See [`scripts/README.md`](../scripts/README.md) for exit codes.
+
+The first measured run on Machine A, after both traps below were fixed, took **2 h 04 min** of
+wall clock for the inner Slicer build at roughly 25 to 40 targets per minute on `-j4`, and the
+finished tree was 6.9 GB.
+
+<a id="pythonqt-wrappers"></a>
+
+### PythonQt wrapper generation on Qt 6
+
+First hit on 2026-08-17, roughly four hours into a clean superbuild on Machine A. Recorded here
+because the error message names the wrong thing and costs an evening if taken at face value.
+
+**Symptom.** The superbuild reaches CTK, then dies:
+
+```
+CMake Error at CMakeLists.txt:180 (message):
+  PythonQt: missing generated wrapper sources for Qt 6.11.
+  Expected: .../CTK-build/PythonQtGenerator-output-6.11.1/generated_cpp
+```
+
+**What is actually wrong.** PythonQt ships pre-generated wrappers only for Qt 5.15
+(`generated_cpp_515`). For Qt 6 it sets `PythonQt_GENERATED_PATH` to `NOTFOUND` and depends on
+CTK building and running `PythonQtGenerator` to produce them. The generator does build, and it
+does run, but CTK invokes it with `--output-directory` alone and no `--include-paths`. Its
+bundled preprocessor (simplecpp) therefore runs with an empty include path and cannot find
+glibc or libstdc++ headers, so Qt's own configuration headers fail on symbols they expect the
+system to supply:
+
+```
+qconfig.h:19:  #error "unexpected value for __WORDSIZE macro"
+qtypes.h:273:  #error Unsupported platform (unknown value for SIZE_MAX)
+qnumeric.h:73: syntax error: failed to evaluate #if condition, division/modulo by zero
+```
+
+The generator then reports `Classes in typesystem: 0`, writes no output directory, **and exits
+0**. Because the exit code is clean, CTK's launcher declares the step successful and the build
+carries on until PythonQt's configure step trips over the directory that was never created.
+The tell is one line in `CTK-build/PythonQt_GenerateWrapper_step_output.txt`:
+
+```
+PreProcessing - Generate [.preprocessed.tmp] using [...] and include-paths []
+```
+
+An empty `.preprocessed.tmp` in `CTK-build/PythonQtGenerator-build/` confirms it.
+
+**The fix.** Two edits to `Slicer-build/CTK-build/PythonQtGenerator-launcher.cmake`, both marked
+`LOCAL PATCH (BrainTwin_Desktop)`:
+
+1. Pass `--include-paths` covering `/usr/include/qt6` and its module directories, the GCC C
+   headers, and `/usr/include`. Each path is existence-checked first, so a toolchain upgrade
+   warns by name rather than producing another silent empty parse.
+2. Assert after the run that `generated_cpp` exists and holds at least one `.cpp`. This closes
+   the exit-zero hole, so the next occurrence fails at the generator with the cause in view
+   instead of in a later configure step.
+
+**What must be left out, and why.** Do **not** add `/usr/include/c++/<ver>` or its
+subdirectories. This is the second trap, and it costs another cycle if you assume more include
+paths are strictly better. `generator/main.cpp:228` hardcodes `__cplusplus=1`, declaring the
+parse pre-C++98, and `main.cpp:258` deliberately discards `MISSING_HEADER` diagnostics with the
+comment *"we are not interested"*. The generator is built to parse Qt headers only and to let
+standard library includes fail silently. Put libstdc++ within reach and those headers resolve,
+then immediately reject the very macro state the generator declares:
+
+```
+c++0x_warning.h:32: #error This file requires ... -std=c++11
+c++config.h:2537:   undefined function-like macro invocation: __has_builtin( ... )
+```
+
+Result is another zero-class parse. The glibc and GCC **C** headers are required, though, since
+Qt's own `qconfig.h` and `qtypes.h` need `__WORDSIZE` and `SIZE_MAX`. C headers in, C++ headers
+out. Regenerate the toolchain half of the list with:
+
+```bash
+echo | g++ -xc++ -E -v - 2>&1 | sed -n '/search starts here/,/End of search list/p'
+```
+
+then keep only `/usr/lib/gcc/.../include`, `/usr/local/include` and `/usr/include` from it.
+
+**A clean stderr is not the success signal.** Even on a fully successful run the generator
+still prints `#error` lines from `qsystemdetection.h`, `qcompilerdetection.h`, `qtypes.h` and
+`qstdlibdetection.h`, because simplecpp defines neither `__linux__` nor `__GNUC__` nor a
+standard library. These are non-fatal; simplecpp records them and continues. Judge the run by
+`Classes in typesystem:` in the **output** file, never by the error file being empty.
+
+**This patch lives in the build tree, not in the repo.** `PythonQtGenerator-launcher.cmake` is
+generated by CTK from `CTK/CMakeExternals/PythonQt.cmake` through `file(CONFIGURE ...)`. It
+survives an ordinary resume, because nothing re-runs CTK's configure step. It does **not**
+survive a CTK reconfigure or a clean build tree, and the symptom on losing it is the original
+misleading error. If that happens, re-apply the two edits before doing anything else. Moving
+the fix upstream into `CMakeExternals/PythonQt.cmake` is the durable option and is worth doing
+if this recurs, at the cost of a CTK reconfigure and patch-maintenance against a pinned
+upstream checkout.
+
+**Outcome, measured 2026-08-17.** With the corrected paths the generator completes in about six
+seconds:
+
+```
+Classes in typesystem: 810
+Generated:  - header: 792 (792)   - impl: 792 (792)   - pri: 13 (13)
+```
+
+92 files, 14 MB, across 13 module directories. `QObject`, `QWidget`, `QApplication` and
+`QPushButton` are wrapped; `QString` and `QVariant` correctly appear as builtin value types in
+`com_trolltech_qt_core_builtin` rather than as `PythonQtWrapper_` classes.
+
+Against the shipped Qt 5.15 baseline (`generated_cpp_515`, 16 modules, 109 files) three modules
+are absent, all expected: `webkit` and `xmlpatterns` no longer exist in Qt 6, and `opengl` is
+not reachable because the generator's master include never pulls in `QtOpenGL`. Treat 13
+modules and roughly 800 classes as the known-good shape. A run that yields far fewer means the
+preprocessor stopped early.
+
+**Risk that did not materialise.** PythonQt is pinned at `patched-v4.1.0-2026-06-05-9992368e9`,
+whose newest commit is *cmake: Add 6.10 support*, while Fedora 44 ships Qt 6.11.1. The concern
+was that one minor version of drift would defeat the parse. It did not: the failure was
+entirely in how CTK invokes the generator, not in Qt 6.11 itself, and no Qt downgrade is
+needed. If a future Qt genuinely does break the parse, the fallback is a side-installed Qt 6.10
+selected through `-DQt6_DIR`, which is a revisit trigger for
+[ADR-010](DECISIONS/ADR-010-slicer-pinned-revision.md).
+
+<a id="curl-idn2"></a>
+
+### Static curl and libidn2
+
+First hit on 2026-08-17, in the inner Slicer build at roughly target 500 of 4284. An upstream
+Slicer bug that only fires on distributions carrying `libidn2-devel`, which is why it is not
+widely reported.
+
+**Symptom.** `libRemoteIO.so` fails to link:
+
+```
+libcurl.a(idn.c.o): in function `Curl_idn_decode':
+  undefined reference to `idn2_check_version'
+  undefined reference to `idn2_lookup_ul'
+  undefined reference to `idn2_to_unicode_8z8z'
+```
+
+**What is actually wrong.** Slicer builds its own **static** curl and means to disable IDN.
+`SuperBuild/External_curl.cmake` passes `-DHAVE_LIBIDN2:BOOL=OFF`, but that is curl's
+*detection result* variable, not its toggle. The option curl obeys is `USE_LIBIDN2`, which
+Slicer never sets, so it keeps its default of `ON`:
+
+```
+HAVE_LIBIDN2:BOOL=OFF     what Slicer sets, ineffective
+USE_LIBIDN2:BOOL=ON       what curl actually reads
+```
+
+curl's pkg-config check then finds Fedora's `/usr/lib64/libidn2.so` and compiles `idn.c` with
+IDN support. Because `libcurl.a` is a static archive it carries no dependency record, and
+Slicer links it without `-lidn2`, so the symbols never resolve. On a machine without
+`libidn2-devel` the detection fails, IDN is compiled out, and the bug is invisible.
+
+**The fix.** Set the variable curl actually reads, then reinstall. This is a build-tree change,
+not an upstream edit, so it stays inside the policy in
+[`03-ARCHITECTURE.md`](03-ARCHITECTURE.md):
+
+```bash
+cd Slicer-build/curl-build
+cmake -DUSE_LIBIDN2:BOOL=OFF .
+cmake --build . --target install -- -j4
+nm -u ../curl-install/lib/libcurl.a | grep -c idn2   # must print 0
+```
+
+Confirm by the configure summary line: the `Features:` list must no longer contain `IDN`. The
+outer build then relinks `libRemoteIO.so` on its own, because the refreshed `libcurl.a` is
+newer than the failed target. curl's ExternalProject stamps are left untouched deliberately;
+nothing needs to re-download or re-clone.
+
+**Note for a clean rebuild.** This fix lives in `curl-build/CMakeCache.txt` and dies with the
+build tree. On a from-scratch superbuild the link will fail the same way at the same point.
+Either re-apply it when it appears, or pre-empt it by adding `-DUSE_LIBIDN2:BOOL=OFF` to the
+curl arguments before the first build.
 
 <a id="custom-app"></a>
 
@@ -230,7 +462,10 @@ safe and materially faster when parallel agents or parallel branches build the s
 | `pip install nnunetv2` under `--only-binary=:all:` fails to resolve | `acvl-utils` is sdist-only, no wheel published | Do not pass `--only-binary=:all:` for the pipeline set. It is a pure-Python dependency and installs fine from sdist |
 | torch pulls ~2.5 GB of CUDA libraries that are never usable | Default PyPI torch is the CUDA build | Install torch from `https://download.pytorch.org/whl/cpu` **before** the requirements file, as `scripts/setup-env.sh` does |
 | Superbuild dies partway with no obvious error | Disk exhausted | Check free space against the 60 GB minimum **before** starting: `scripts/check-env.sh --superbuild` |
+| Configure aborts: `Qt 5.15 was not found on your system` | Fedora 44 ships Qt5 runtime-only, no CMake config files. `find_package(Qt5)` cannot succeed regardless of `PATH` | Build against Qt6 instead: install the five packages in the Fedora setup section above, then configure with `-DQt6_DIR:PATH=/usr/lib64/cmake/Qt6 -DSlicer_USE_SYSTEM_QT:BOOL=ON` |
 | `pip install` aborts naming a package that plainly exists | Download timeout on a slow link, reported as if the package were missing | Not a packaging fault. Re-run; pip resumes from its cache. `scripts/setup-env.sh` passes `--retries` and `--timeout` for this reason |
+| `libRemoteIO.so` fails to link, `undefined reference to idn2_*` from `libcurl.a` | Slicer sets `HAVE_LIBIDN2=OFF`, which is curl's detection result, not its toggle. curl obeys `USE_LIBIDN2`, defaults it `ON`, finds Fedora's libidn2, and the static archive is then linked without `-lidn2` | Rebuild curl with `-DUSE_LIBIDN2:BOOL=OFF`. See [Static curl and libidn2](#curl-idn2) |
+| PythonQt configure aborts: `missing generated wrapper sources for Qt 6.11` | CTK runs PythonQtGenerator with an empty include path, so its preprocessor parses zero classes, writes nothing, and still exits 0. The error you see is two steps downstream of the real fault | Pass `--include-paths` in the generator launcher, with Qt and the C headers but **not** libstdc++. See [PythonQt wrapper generation on Qt 6](#pythonqt-wrappers) |
 
 Add a row every time someone loses more than an hour. That is what makes this document worth
 keeping.

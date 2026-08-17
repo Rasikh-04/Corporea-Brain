@@ -5,14 +5,23 @@ Overwrite it; do not append a history. History lives in git and in `docs/DECISIO
 
 ## Last updated
 
+2026-08-17 — **The Slicer superbuild completed for the first time on Machine A.**
+`Slicer 5.12.3-2026-07-22` builds and runs, matching the pin in
+[ADR-010](docs/DECISIONS/ADR-010-slicer-pinned-revision.md). 101 CLI modules, 174 loadable
+modules, 68 scripted modules; the finished tree is 6.9 GB and 57 GB remains free, so the disk
+blocker that dominated this file is **retired**. The application layer is no longer blocked.
+
+Getting there cost two upstream defects, both specific to a distro newer than Slicer 5.12.3
+expects, and both now recorded in [`docs/15`](docs/15-BUILD_AND_ENVIRONMENT.md): PythonQt
+wrapper generation under Qt 6, and static curl silently linking Fedora's libidn2. **Both fixes
+live in the build tree only and do not survive a clean rebuild.** Read those two sections
+before rebuilding anywhere.
+
 2026-08-16 — **Phase 2 is closed.** All five items are done: CI, linters, pipeline stage 3,
 the results-table writers with Bland-Altman, and the PHI-in-logs assertion. 271 tests pass in
 under three seconds; ruff, mypy and the organ manifest validator are green. Three of the four
 cross-cutting assertions in `docs/16` now run on every commit; the fourth, the UI bundle lint,
 waits on a UI bundle existing. Still no application code, and that is on plan.
-
-The superbuild is still blocked on disk and the blocker is now measured rather than estimated.
-See "Disk, and why the workspace partition does not solve it" below.
 
 ## Where the project is
 
@@ -130,14 +139,16 @@ fatal one. Written as it was, the document would have led someone to build the w
 2. **Close ADR-006.** Now the top blocker. The brain manifest carries `<PARCELLATION>`, the
    pipeline cannot name a space, and every deferred check in `validate_organs.py` points at
    it. Nothing in the pipeline can be written correctly before it closes.
-3. Slicer superbuild, **still deferred on disk and still not blocking**. 46 GB free on `/`
-   against a 60 GB minimum. The `workspace` partition does not close it and cannot; the
-   measured table and the three routes that do are in the disk section below and in
-   [`docs/15`](docs/15-BUILD_AND_ENVIRONMENT.md#disk-routes). Gate with
-   `scripts/check-env.sh --superbuild` before configuring — it now measures the filesystem
-   that holds `build/` rather than the repository root. `<PINNED_REVISION>` in
-   [`docs/15`](docs/15-BUILD_AND_ENVIRONMENT.md) is still a placeholder: pick and record the
-   revision before configuring, because changing it later is an ADR.
+3. Slicer superbuild, **done**. It built and runs; the revision is pinned in
+   [ADR-010](docs/DECISIONS/ADR-010-slicer-pinned-revision.md) and the two Fedora 44 traps are
+   written up in [`docs/15`](docs/15-BUILD_AND_ENVIRONMENT.md#superbuild). The disk section
+   below is kept as the record of how the budget was reasoned about, but it is now history:
+   the finished tree measures **6.9 GB**, roughly a ninth of the 60 GB planning figure,
+   because this build is Release against system Qt with ccache. That is the finished size,
+   not the peak, and it holds for this configuration only.
+   The open follow-ups are to launch the application once and record what it shows, and to
+   decide whether the two build-tree-only fixes get pre-empted in the configure step so a
+   clean rebuild does not rediscover them.
 4. Fill the track ownership table in the research plan Part 7.3. An empty cell is a risk.
 5. Prune the ECC surface per
    [`docs/ai-workflow/A2-CONTEXT_BUDGET_AND_SESSION_HYGIENE.md`](docs/ai-workflow/A2-CONTEXT_BUDGET_AND_SESSION_HYGIENE.md).

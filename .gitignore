@@ -67,6 +67,11 @@ _build/
 CMakeCache.txt
 CMakeFiles/
 CMakeUserPresets.json
+
+# --- Superbuild source clones ---------------------------------------------------
+# Third-party source, cloned per docs/15-BUILD_AND_ENVIRONMENT.md, never committed here.
+/Slicer/
+braintwin-app/
 cmake_install.cmake
 compile_commands.json
 install_manifest.txt
