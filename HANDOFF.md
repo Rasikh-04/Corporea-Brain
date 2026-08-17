@@ -5,11 +5,28 @@ Overwrite it; do not append a history. History lives in git and in `docs/DECISIO
 
 ## Last updated
 
+2026-08-17 — **The build phase is closed.** Every gate was re-run from the repository root at
+close and all are green: 271 tests in 2.5 s, `ruff check`, `ruff format --check`, `mypy` over
+14 files, and the organ manifest validator. All four marked assertion classes pass on their own
+(orientation 85, PHI 21, seam 6, known-answer 24). One gate defect was found and fixed in the
+process, described under "Closing the build phase" below. Nothing is blocking; the next phase
+is the application layer, gated on ADR-006.
+
 2026-08-17 — **The Slicer superbuild completed for the first time on Machine A.**
 `Slicer 5.12.3-2026-07-22` builds and runs, matching the pin in
-[ADR-010](docs/DECISIONS/ADR-010-slicer-pinned-revision.md). 101 CLI modules, 174 loadable
-modules, 68 scripted modules; the finished tree is 6.9 GB and 57 GB remains free, so the disk
-blocker that dominated this file is **retired**. The application layer is no longer blocked.
+[ADR-010](docs/DECISIONS/ADR-010-slicer-pinned-revision.md). **146 modules load: 51 CLI, 27
+loadable, 68 scripted**, counted by asking the running application, not by counting files.
+The finished tree is 6.9 GB and 57 GB remains free, so the disk blocker that dominated this
+file is **retired**. The application layer is no longer blocked.
+
+Those module counts correct the ones in commit `cf79551`, which read 101 CLI and 174 loadable.
+Both were file counts in the output directories rather than module counts: `cli-modules/` holds
+51 descriptors beside 50 executables for the same 51 modules, and `qt-loadable-modules/` holds
+175 files of which most are support libraries. The check is
+`slicer.app.moduleManager()`, classifying each loaded module by `className()`, and it
+self-checks because the three categories sum to the reported total. Counting build output as
+though it were modules is the same mistake docs/15 already warns about for the completion
+marker: prefer the artifact that answers the question over the one that is easy to count.
 
 Getting there cost two upstream defects, both specific to a distro newer than Slicer 5.12.3
 expects, and both now recorded in [`docs/15`](docs/15-BUILD_AND_ENVIRONMENT.md): PythonQt
@@ -22,6 +39,72 @@ the results-table writers with Bland-Altman, and the PHI-in-logs assertion. 271 
 under three seconds; ruff, mypy and the organ manifest validator are green. Three of the four
 cross-cutting assertions in `docs/16` now run on every commit; the fourth, the UI bundle lint,
 waits on a UI bundle existing. Still no application code, and that is on plan.
+
+## Closing the build phase
+
+Two things were wrong at close and both are fixed. Neither was caught by CI, which is the
+point worth carrying forward: **both hid in the gap between what CI runs and what a person
+runs.**
+
+**The module counts were file counts.** Recorded above. CI could never have caught this because
+CI does not have a built Slicer.
+
+**`ruff format` was rewriting documentation.** CI runs `ruff format --check pipeline eval app
+scripts`, four explicit directories, and is green. But `pyproject.toml` excluded only `build`,
+so the bare `ruff format .` that any developer or agent would naturally run at the repo root
+reached into `docs/` and reformatted the Python blocks inside our markdown. Those blocks are
+illustrative fragments, not modules, and the formatter's output for them is not merely noisy,
+it is wrong: it rewrites the dict literal in
+[`docs/ai-workflow/A1`](docs/ai-workflow/A1-MODEL_ROUTING_AND_COST.md) into a tuple, silently
+corrupting a documented example. `extend-exclude` now lists `build`, `docs`, `organs`, `Slicer`
+and `Slicer-build`, so the configuration enforces the scope its own header already claimed.
+Root and CI-scoped runs now agree, which is the property that was actually missing.
+
+The general lesson for the phases after this one: a gate that passes in CI and fails, or
+silently damages something, when run by hand is not a gate. Where CI narrows its scope with an
+explicit path list, the configuration has to narrow the same way, or the two drift and only the
+human ever sees the difference.
+
+## Next phase: the vertical slice
+
+The next phase is **Phase 3, weeks 13 to 22, one disorder end to end and measured**, which is
+the **R2** rung and the thesis artifact. Ischemic stroke first. Defined in
+[the research plan](docs/research/FYP_Brain_Digital_Twin_Reasoning_and_Research_Plan.md#phase-3);
+the strict order of work is set there and should not be reordered casually.
+
+**The gate out of it is numeric, not visual:** real numbers in a table for segmentation
+(Dice, HD95, ASSD) and for region attribution agreement. Not screenshots.
+
+What is already in place for it, which is most of the hard part of rule 7:
+
+- The evaluation harness and all six results tables exist and are tested, so **the measuring
+  instrument is built before the thing it measures.** Numbers have somewhere to land on day one.
+- The orientation assertion exists and runs on every commit, so stage 3 onward cannot silently
+  invert laterality.
+- The PHI assertion exists and is written so later stages join one test rather than adding one.
+- A working Slicer to host the application layer.
+
+What is genuinely not in place, in the order it will bite:
+
+1. **ADR-006 is open and it is the top blocker.** Canonical coordinate space and parcellation
+   atlas. Stages 7, 8 and 10 (template registration, parcellation, region attribution) are
+   exactly steps 3 and 4 of the phase gate, and none of them can be written before it closes.
+   Every deferred check in `validate_organs.py` points at it and the brain manifest still
+   carries the `<PARCELLATION>` placeholder. **Close this first. Nothing else competes.**
+2. **No datasets and no downloaders.** `scripts/README.md` says so directly. Phase 3 needs
+   ATLAS for stroke masks. Rule 8 means downloader scripts only, never the data, and the DUA
+   has to be in hand before the download, not after.
+3. **Twelve of thirteen pipeline stages do not exist.** Only stage 3 is built.
+   [`docs/06`](docs/06-IMAGING_PIPELINE.md) specifies stages 0 to 12; the phase needs 0, 1 and
+   2 before stage 3 has real input, then 4 through 10 to reach the gate.
+4. **ADR-007 is open and due before R2.** Record store technology, which the clinical record
+   and timeline in steps 6 and 7 sit on.
+5. The two build-tree-only Fedora fixes are still unreproducible from the repository.
+
+The honest read: the scaffolding phase is finished and finished well, but **the next phase
+cannot start on its real work until ADR-006 closes.** The one thing that can proceed in
+parallel is dataset access, because the paperwork is the long pole and it does not depend on
+any decision here.
 
 ## Where the project is
 
@@ -146,9 +229,17 @@ fatal one. Written as it was, the document would have led someone to build the w
    the finished tree measures **6.9 GB**, roughly a ninth of the 60 GB planning figure,
    because this build is Release against system Qt with ccache. That is the finished size,
    not the peak, and it holds for this configuration only.
-   The open follow-ups are to launch the application once and record what it shows, and to
-   decide whether the two build-tree-only fixes get pre-empted in the configure step so a
-   clean rebuild does not rediscover them.
+   Verified again on 2026-08-17 at phase close, from the artifacts rather than from any
+   completion marker: the launcher starts, the embedded Python runs, the application reports
+   `5.12.3-2026-07-22` at revision `34627`, and 146 modules load as 51 CLI, 27 loadable and 68
+   scripted. That was a headless run (`--no-main-window --exit-after-startup`), which is what
+   makes it usable as a check later. **Launching the GUI once and recording what the main
+   window shows is still open**, and is a human step, not an automated one.
+
+   The other open follow-up is to decide whether the two build-tree-only fixes get pre-empted
+   in the configure step so a clean rebuild does not rediscover them. This is the largest
+   unbounded risk left in the build: the fixes exist only in `Slicer-build/`, nothing in the
+   repository reproduces them, and the machine that rebuilds next pays the same two days.
 4. Fill the track ownership table in the research plan Part 7.3. An empty cell is a risk.
 5. Prune the ECC surface per
    [`docs/ai-workflow/A2-CONTEXT_BUDGET_AND_SESSION_HYGIENE.md`](docs/ai-workflow/A2-CONTEXT_BUDGET_AND_SESSION_HYGIENE.md).
@@ -259,12 +350,20 @@ Ordered so that each item has something already built to measure it.
    CI log of the run that caught the leak, and a PHI scanner whose own output is PHI has solved
    nothing.
 
-## Disk, and why the workspace partition does not solve it
+## Disk, and why the workspace partition does not solve it (history, superseded)
 
-Measured 2026-08-16. Table and the three routes to 60 GB are in
-[`docs/15`](docs/15-BUILD_AND_ENVIRONMENT.md#disk-routes).
+**This section is no longer live and nothing here blocks anything.** It is kept because the
+reasoning is worth having on record, not because the numbers still hold. The superbuild
+finished in 6.9 GB, `/` now has **57 GB free**, and the 60 GB minimum it argues against was a
+planning figure for an unknown machine rather than a measurement of this one. Read it as an
+account of how the budget was reasoned about while the size was unknown. The one item in it
+that is still actionable is `link-workspace.sh`, which has still not been run and no longer
+needs to be: `/mnt/workspace` is not currently mounted and `build/` is an ordinary directory.
 
-`/` has **46 GB free** against a 60 GB superbuild minimum. The `workspace` partition
+Measured 2026-08-16, when the numbers below were current. Table and the three routes to 60 GB
+are in [`docs/15`](docs/15-BUILD_AND_ENVIRONMENT.md#disk-routes).
+
+At that time `/` had **46 GB free** against a 60 GB superbuild minimum. The `workspace` partition
 (`/dev/nvme0n1p6`) is **19.4 GB in total, 18 GB free**. Linking it into the repository does not
 close the gap and cannot: a symlink relocates a directory, it does not pool free space across
 filesystems. A build that lands there gets 18 GB.

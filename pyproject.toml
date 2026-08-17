@@ -4,7 +4,13 @@
 # code). docs/16-TESTING_STRATEGY.md#coverage draws the same line for coverage targets.
 line-length = 100
 target-version = "py312"
-extend-exclude = ["build"]
+# CI passes the four in-scope directories explicitly (.github/workflows/ci.yml), so this list
+# only matters for a bare `ruff .` at the repo root. It has to be kept in agreement with the
+# scope above anyway: without `docs`, `ruff format` reaches into the Python blocks of our
+# markdown and reformats prose illustrations as if they were code. Those blocks are fragments,
+# not modules, and the formatter's output for them can be wrong. It rewrites the dict literal
+# in docs/ai-workflow/A1 into a tuple, which would silently corrupt the documented example.
+extend-exclude = ["build", "docs", "organs", "Slicer", "Slicer-build"]
 
 [tool.ruff.lint]
 # E/F: pycodestyle + pyflakes, the PEP 8 baseline docs/14-CODING_STANDARDS.md#python asks
