@@ -5,6 +5,18 @@ Overwrite it; do not append a history. History lives in git and in `docs/DECISIO
 
 ## Last updated
 
+2026-10-12 — **Demonstration material for the instructor meeting added under [`demo/`](demo/).**
+No decision changed and no application code was written. `demo/run-demo.sh` steps through
+eleven labelled stages (platform, ours, mock) against the built Slicer and three public Slicer
+sample scans fetched into git-ignored `build/demo-data/`; `demo/briefing.html` is the page
+shown beside it. A full rehearsal ran green. The GUI was launched for the first time, which
+closes the "launch the GUI once" follow-up below, and it surfaced **two defects of this build
+(5.12.3 against system Qt 6)**: opening the Volume Rendering module panel closes the
+application, and the Segment Editor Smoothing effect raises a `TypeError` when its panel
+updates. Volume rendering itself works through the module logic. Neither is fixed; both will
+matter to the application layer and are not yet in `docs/15`. The meeting may close or move
+ADR-003's standing with the instructor and ADR-004 to ADR-007; record the outcome here.
+
 2026-08-17 — **The build phase is closed.** Every gate was re-run from the repository root at
 close and all are green: 271 tests in 2.5 s, `ruff check`, `ruff format --check`, `mypy` over
 14 files, and the organ manifest validator. All four marked assertion classes pass on their own
